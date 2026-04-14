@@ -186,7 +186,7 @@ select.fi{background:var(--card)}
     <header class="hd">
       <button class="mb" onclick="document.getElementById('sidebar').classList.toggle('closed')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
       <div style="flex:1;display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div><h1 id="hTitle">Resumen</h1><div class="dt" id="hDate"></div></div><div style="flex:1;min-width:180px;max-width:360px;position:relative"><input type="text" id="globalSearch" placeholder="🔍 Buscar en todo el panel..." oninput="doGlobalSearch(this.value)" onblur="setTimeout(function(){var r=document.getElementById(\'gsResults\');if(r)r.style.display=\'none\'},200)" onfocus="if(this.value)doGlobalSearch(this.value)" style="width:100%;padding:8px 14px;border:1px solid rgba(212,212,170,.4);border-radius:20px;background:rgba(254,250,224,.5);font-size:12px;outline:none;font-family:inherit"><div id="gsResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);margin-top:4px;max-height:360px;overflow-y:auto;z-index:100"></div></div></div>
-      <div style="background:linear-gradient(135deg,#40916C,#2D6A4F);color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 8px rgba(64,145,108,.3);margin-right:8px">v17b · HOY+AGENDA FIX</div>
+      <div style="background:linear-gradient(135deg,#40916C,#2D6A4F);color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 8px rgba(64,145,108,.3);margin-right:8px">v17c · FIX EXCEL SUM</div>
       <div class="hr"><div class="nt" id="notifBell" onclick="toggleNotifs(event)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#52796F" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div class="notif-counter" id="notifCounter" style="display:none">0</div></div><div class="av">JA</div></div>
     </header>
     <div id="notifPanel" class="notif-panel">
@@ -229,7 +229,7 @@ notas:"Proceso complejo. Requiere coordinación con MINSAL, Serv. Salud Aconcagu
 };
 
 // ══════ STATE ══════
-var APP_VERSION="2026.04.13.v17b";
+var APP_VERSION="2026.04.14.v17c";
 var D;
 function loadData(){
   try{
@@ -276,12 +276,12 @@ function nid(){return Date.now()+Math.floor(Math.random()*1000)}
 // ══════ HELPERS ══════
 var sec="hoy";var charts=[];
 function dc(){charts.forEach(function(c){c.destroy()});charts=[]}
-function fd(d){return new Date(d+"T12:00:00").toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"})}
+function fd(d){if(!d||!/^\d{4}-\d{2}-\d{2}/.test(String(d)))return "—";var dt=new Date(d+"T12:00:00");if(isNaN(dt.getTime()))return "—";return dt.toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"})}
 var BL={completado:"Completado",en_progreso:"En Progreso",pendiente:"Pendiente",adjudicada:"Adjudicada",en_proceso:"En Proceso",ejecucion:"Ejecución",diseno:"Diseño",licitacion:"Licitación",vencido:"Vencido",respondido:"Respondido",en_licitacion:"En Licitación",publica:"Pública",privada:"Privada"};
 function bd(s){return'<span class="bd bd-'+s+'">'+(BL[s]||s)+'</span>'}
 function dot(p){return'<span class="pd pd-'+p+'"></span>'}
 function pc(p){return p>70?"var(--ok)":p>40?"var(--warn)":"var(--info)"}
-function daysLeft(dl){var t=new Date(dl+"T23:59:59")-new Date();return Math.ceil(t/86400000)}
+function daysLeft(dl){if(!dl||!/^\d{4}-\d{2}-\d{2}/.test(String(dl)))return 999;var t=new Date(dl+"T23:59:59")-new Date();if(isNaN(t))return 999;return Math.ceil(t/86400000)}
 function daysClass(d){return d<0?"overdue":d<=5?"urgent":d<=15?"warning":"ok"}
 function daysLabel(d){return d<0?d+" días (VENCIDO)":d===0?"HOY":d===1?"1 día":d+" días"}
 function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},2200)}
@@ -966,6 +966,7 @@ function delOficio(i){if(confirm("¿Eliminar este oficio?")){D.oficios.splice(i,
 
 // ══════ SUMARIOS E INVESTIGACIONES ══════
 var SUM_STATUS={instruccion:"En Instrucción",vista_fiscal:"Vista Fiscal",cargos:"Formulación de Cargos",resolucion:"Resolución Pendiente",cerrado:"Cerrado",sobreseido:"Sobreseído"};
+function sumStLabel(s){return SUM_STATUS[s]||"En Instrucción"}
 var SUM_TIPO={investigacion:"Investigación Sumaria",sumario:"Sumario Administrativo"};
 function rSumarios(){
   if(!D.sumarios)D.sumarios=[];
@@ -1007,7 +1008,7 @@ function rSumarios(){
         h+='<div class="ofi-days ok"><div style="font-size:18px">✓</div><div style="font-size:10px;font-weight:400">Cerrado</div></div>';
       }
       h+='<div class="ofi-main"><div class="ofi-title"><span style="background:'+typeColor+'18;color:'+typeColor+';padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;margin-right:6px">'+SUM_TIPO[s.tipo]+'</span>'+s.decreto+'</div>';
-      h+='<div class="ofi-sub">📌 '+s.materia+'<br>👤 Fiscal: '+s.fiscal+'<br>📅 Decretado: '+fd(s.fechaDecreto)+' — Plazo base: '+s.plazoBase+' días — Estado: <strong>'+SUM_STATUS[s.status]+'</strong></div>';
+      h+='<div class="ofi-sub">📌 '+s.materia+'<br>👤 Fiscal: '+s.fiscal+'<br>📅 Decretado: '+fd(s.fechaDecreto)+' — Plazo base: '+s.plazoBase+' días — Estado: <strong>'+sumStLabel(s.status)+'</strong></div>';
       if(s.obs)h+='<div class="ofi-obs">💬 '+s.obs+'</div>';
       h+=renderAdjuntos(s,"sumario",i);
       h+='</div><button class="be" onclick="editSumario('+i+')" title="Editar">✏️</button><button class="bdel" onclick="delSumario('+i+')" title="Eliminar">🗑</button></div>';
@@ -1018,7 +1019,7 @@ function rSumarios(){
   h+='<div class="cdl"><h4 style="margin:0 0 8px;font-size:14px;font-weight:600">⚖️ Marco Legal — Ley 18.883 (Estatuto Administrativo Funcionarios Municipales)</h4><div style="font-size:13px;color:var(--txl);line-height:1.8"><strong>Investigación Sumaria (Art. 126):</strong> Plazo de 5 días, prorrogable. Procede para faltas administrativas leves.<br><strong>Sumario Administrativo (Arts. 127-143):</strong> Plazo de 20 días para investigar, prorrogable hasta 60 días. Para faltas que ameriten sanciones graves.<br><strong>Etapas:</strong> Decreto → Designación Fiscal → Instrucción → Vista Fiscal → Formulación de Cargos → Descargos → Resolución.<br><strong>Sanciones (Art. 120):</strong> Censura, Multa, Suspensión, Destitución.<br><strong>Reserva (Art. 137):</strong> Los procedimientos son secretos hasta la formulación de cargos.</div></div>';
   el.innerHTML=h;
 }
-function addDays(dateStr,days){var d=new Date(dateStr+"T12:00:00");d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)}
+function addDays(dateStr,days){if(!dateStr||!/^\d{4}-\d{2}-\d{2}/.test(String(dateStr)))return new Date().toISOString().slice(0,10);var d=new Date(dateStr+"T12:00:00");if(isNaN(d.getTime()))return new Date().toISOString().slice(0,10);d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)}
 function editSumario(i){
   var s=i>=0?D.sumarios[i]:{id:nid(),tipo:"investigacion",decreto:"",fechaDecreto:new Date().toISOString().slice(0,10),fiscal:"",materia:"",plazoBase:5,status:"instruccion",obs:""};
   var isN=i<0;
@@ -1358,17 +1359,32 @@ function processSumExcel(){
   var r=new FileReader();
   r.onload=function(e){
     try{
-      var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
-      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""});
-      var added=0;
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:"",raw:false,dateNF:"yyyy-mm-dd"});
+      var added=0,errores=[];
+      var validStatus=["instruccion","vista_fiscal","cargos","resolucion","cerrado","sobreseido"];
       for(var i=1;i<rows.length;i++){
-        var r=rows[i];if(!r[0]&&!r[1])continue;
-        var tipo=String(r[0]||"investigacion").toLowerCase().indexOf("sumario")>=0?"sumario":"investigacion";
-        D.sumarios.push({id:nid(),tipo:tipo,decreto:String(r[1]||""),fechaDecreto:String(r[2]||new Date().toISOString().slice(0,10)),fiscal:String(r[3]||""),materia:String(r[4]||""),plazoBase:parseInt(r[5])||(tipo==="sumario"?20:5),status:String(r[6]||"instruccion").toLowerCase().replace(/ /g,"_"),obs:String(r[7]||"")});
-        added++;
+        var row=rows[i];if(!row||(!row[0]&&!row[1]&&!row[4]))continue;
+        try{
+          var tipo=String(row[0]||"investigacion").toLowerCase().indexOf("sumario")>=0?"sumario":"investigacion";
+          // Normalize date: handle Excel serial numbers, Date objects, and strings
+          var fecha=row[2];var fechaStr="";
+          if(fecha instanceof Date&&!isNaN(fecha)){fechaStr=fecha.toISOString().slice(0,10)}
+          else if(typeof fecha==="number"&&fecha>1){var d=new Date(Math.round((fecha-25569)*86400*1000));if(!isNaN(d))fechaStr=d.toISOString().slice(0,10)}
+          else if(fecha){var s=String(fecha).trim();var m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);if(m){var dd=m[1].padStart(2,"0"),mm=m[2].padStart(2,"0"),yy=m[3].length===2?"20"+m[3]:m[3];fechaStr=yy+"-"+mm+"-"+dd}else if(/^\d{4}-\d{2}-\d{2}/.test(s)){fechaStr=s.slice(0,10)}}
+          if(!fechaStr||!/^\d{4}-\d{2}-\d{2}$/.test(fechaStr))fechaStr=new Date().toISOString().slice(0,10);
+          // Normalize status
+          var rawStatus=String(row[6]||"").toLowerCase().trim().replace(/\s+/g,"_").replace(/ó/g,"o").replace(/í/g,"i").replace(/á/g,"a").replace(/é/g,"e");
+          if(validStatus.indexOf(rawStatus)<0)rawStatus="instruccion";
+          D.sumarios.push({id:nid(),tipo:tipo,decreto:String(row[1]||"").trim(),fechaDecreto:fechaStr,fiscal:String(row[3]||"").trim(),materia:String(row[4]||"").trim(),plazoBase:parseInt(row[5])||(tipo==="sumario"?20:5),status:rawStatus,obs:String(row[7]||"").trim()});
+          added++;
+        }catch(errRow){errores.push("Fila "+(i+1)+": "+errRow.message)}
       }
-      save();p.innerHTML='<div style="background:rgba(64,145,108,.1);padding:12px;border-radius:8px;color:#1B4332;font-size:13px"><strong>✅ '+added+' sumarios cargados</strong></div>';
-      setTimeout(function(){closeModal();render();toast("✅ "+added+" sumarios cargados")},1200);
+      save();
+      var msg='<div style="background:rgba(64,145,108,.1);padding:12px;border-radius:8px;color:#1B4332;font-size:13px"><strong>✅ '+added+' sumarios cargados</strong></div>';
+      if(errores.length>0)msg+='<div style="background:rgba(221,161,94,.1);padding:12px;border-radius:8px;color:#856404;font-size:12px;margin-top:8px">⚠️ '+errores.length+' filas con problemas (ignoradas)</div>';
+      p.innerHTML=msg;
+      setTimeout(function(){closeModal();render();toast("✅ "+added+" sumarios cargados")},1500);
     }catch(err){p.innerHTML='<div style="background:rgba(188,71,73,.1);padding:12px;border-radius:8px;color:#BC4749;font-size:13px">❌ '+err.message+'</div>'}
   };
   r.readAsArrayBuffer(file);
@@ -1835,8 +1851,8 @@ function generarReporte(){
 
 // ══════ GOOGLE DRIVE SYNC ══════
 // IMPORTANTE: Reemplaza estos valores con tus credenciales de Google Cloud Console
-var GAPI_CLIENT_ID="1007777115422-m012pqlaluphdf14bvdipcm9et0e5v1r.apps.googleusercontent.com";
-var GAPI_API_KEY="AIzaSyA-r7sIBklSg_phN6Lpq6wUiA_LEUtgBOs";
+var GAPI_CLIENT_ID="TU_CLIENT_ID_AQUI.apps.googleusercontent.com";
+var GAPI_API_KEY="TU_API_KEY_AQUI";
 var GAPI_SCOPES="https://www.googleapis.com/auth/drive.file";
 var GAPI_DISCOVERY="https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
 var DRIVE_FILENAME="panel_llayllay_data.json";
