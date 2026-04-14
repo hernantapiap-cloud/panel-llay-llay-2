@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Administrador Municipal — Llay-Llay</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🏛</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<style>
+:root{--pri:#1B4332;--pri-l:#2D6A4F;--pri-s:#40916C;--acc:#D4A373;--acc-l:#FAEDCD;--bg:#FEFAE0;--card:#FFF;--tx:#1B4332;--txl:#52796F;--ok:#40916C;--warn:#DDA15E;--err:#BC4749;--info:#3A86A8;--brd:#D4D4AA}
+body.dark{--pri:#52B788;--pri-l:#74C69D;--pri-s:#95D5B2;--acc:#D4A373;--acc-l:#3D3524;--bg:#1A1F1C;--card:#252B27;--tx:#E8EDE9;--txl:#95A5A0;--ok:#52B788;--warn:#E9B872;--err:#D66A6D;--info:#6BB8D1;--brd:#3D4540}
+body.dark .cd{background:var(--card);border-color:var(--brd)}
+body.dark input,body.dark select,body.dark textarea{background:#2E3530;color:var(--tx);border-color:var(--brd)}
+body.dark table{color:var(--tx)}
+body.dark tr.ra{background:rgba(255,255,255,.03)}
+body.dark .fi{background:#2E3530;color:var(--tx)}
+@media print{body{background:#fff!important}.sb,.hd,#notifPanel,#gsResults,.be,.bdel,.mb{display:none!important}.mn{margin-left:0!important}.cd{break-inside:avoid;page-break-inside:avoid;box-shadow:none;border:1px solid #ddd}.print-only{display:block!important}.no-print{display:none!important}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);overflow:hidden;height:100vh}
+button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inherit}
+input[type=checkbox]{accent-color:var(--pri-s);cursor:pointer;width:17px;height:17px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#c4c4a0;border-radius:3px}
+
+/* Layout */
+.app{display:flex;height:100vh}
+.sidebar{width:260px;background:var(--pri);display:flex;flex-direction:column;transition:width .3s;overflow:hidden;flex-shrink:0}
+.sidebar.closed{width:0}
+.sb-hd{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.1);min-width:260px}
+.sb-hd .sub{font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+.sb-hd .ttl{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.sb-hd .role{font-size:11px;color:var(--acc);margin-top:4px;font-weight:500}
+.sb-nav{padding:16px 12px;flex:1;overflow-y:auto;min-width:260px}
+.sb-ft{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);min-width:260px;font-size:11px;color:rgba(255,255,255,.3);line-height:1.5}
+.nb{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border:none;border-radius:10px;margin-bottom:3px;font-size:13px;font-weight:400;background:transparent;color:rgba(255,255,255,.6);transition:all .2s;text-align:left}
+.nb:hover{background:rgba(255,255,255,.08)}.nb.act{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+.nb svg{flex-shrink:0}
+
+.mn{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.hd{display:flex;align-items:center;gap:16px;padding:14px 28px;background:var(--card);border-bottom:1px solid rgba(212,212,170,.2);flex-shrink:0}
+.hd h1{margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+.hd .dt{font-size:12px;color:var(--txl);margin-top:2px}
+.hr{display:flex;align-items:center;gap:12px;margin-left:auto}
+.av{width:36px;height:36px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.nt{position:relative;cursor:pointer}.nd{position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:var(--err)}
+.ct{flex:1;padding:28px;overflow-y:auto}
+.mb{background:none;border:none;color:var(--tx);padding:4px}
+
+/* Grid */
+.g{display:grid;gap:16px}.g4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}.gu{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g20{gap:20px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+
+/* Card */
+.cd{background:var(--card);border-radius:16px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid rgba(212,212,170,.2)}
+.cds{padding:20px}.cdu{cursor:default;transition:transform .25s,box-shadow .25s}.cdu:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(0,0,0,.08)}
+.cdt{background:var(--acc-l);border:1px solid rgba(212,163,115,.27);border-radius:16px;padding:20px}
+.cdl{background:rgba(27,67,50,.05);border:1px solid rgba(27,67,50,.13);border-radius:16px;padding:20px}
+
+/* Badge */
+.bd{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;display:inline-block}
+.bd-completado{background:#D8F3DC;color:#1B4332}.bd-en_progreso,.bd-en_proceso{background:#FFF3CD;color:#856404}.bd-pendiente{background:#FCE4EC;color:#BC4749}
+.bd-adjudicada{background:#D8F3DC;color:#1B4332}.bd-ejecucion{background:#D4E6F1;color:#1A5276}.bd-diseno{background:#F3E5F5;color:#6A1B9A}.bd-licitacion{background:#FFF3CD;color:#856404}
+.bd-en_licitacion{background:#D4E6F1;color:#1A5276}.bd-publica{background:#D8F3DC;color:#1B4332}.bd-privada{background:#FFE5B4;color:#8B4513}
+.bd-vencido{background:#BC4749;color:#fff}.bd-respondido{background:#D8F3DC;color:#1B4332}
+.alert-banner{background:linear-gradient(135deg,#BC4749,#a03032);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500;box-shadow:0 4px 12px rgba(188,71,73,.25)}
+.alert-banner svg{flex-shrink:0}
+.ofi-row{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid rgba(212,212,170,.1);flex-wrap:wrap;align-items:flex-start}
+.ofi-main{flex:1;min-width:200px}.ofi-title{font-size:14px;font-weight:600}.ofi-sub{font-size:12px;color:var(--txl);margin-top:3px;line-height:1.5}
+.ofi-days{text-align:center;min-width:70px;padding:6px 10px;border-radius:10px;font-weight:700}
+.ofi-days.urgent{background:#FCE4EC;color:#BC4749}.ofi-days.warning{background:#FFF3CD;color:#856404}.ofi-days.ok{background:#D8F3DC;color:#1B4332}.ofi-days.overdue{background:#BC4749;color:#fff}
+.ofi-obs{font-size:12px;color:var(--txl);font-style:italic;margin-top:4px;padding:4px 8px;background:rgba(212,212,170,.15);border-radius:6px}
+.unit-notes{width:100%;min-height:60px;padding:8px 12px;border-radius:8px;border:1px solid var(--brd);font-size:12px;resize:vertical;outline:none;margin-top:10px;transition:border .2s;background:rgba(254,250,224,.5)}
+.unit-notes:focus{border-color:var(--pri-s)}
+.unit-notes-label{font-size:11px;color:var(--txl);margin-top:10px;font-weight:600}
+
+/* Notifications panel */
+.notif-counter{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:var(--err);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 2px 4px rgba(0,0,0,.2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.notif-panel{position:fixed;top:62px;right:20px;width:380px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);background:var(--card);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18);z-index:150;display:none;flex-direction:column;overflow:hidden;animation:slideDown .25s ease}
+.notif-panel.open{display:flex}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.notif-header{padding:16px 20px;border-bottom:1px solid rgba(212,212,170,.2);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1B4332,#2D6A4F);color:#fff}
+.notif-header h3{margin:0;font-size:15px;font-weight:700}
+.notif-header .nx{background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.notif-header .nx:hover{background:rgba(255,255,255,.25)}
+.notif-body{flex:1;overflow-y:auto;padding:8px 0}
+.notif-section{padding:8px 16px}
+.notif-section-title{font-size:10px;font-weight:700;color:var(--txl);text-transform:uppercase;letter-spacing:.8px;padding:8px 4px 6px;display:flex;align-items:center;gap:6px}
+.notif-item{display:flex;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer;transition:background .15s;align-items:flex-start;border-left:3px solid transparent}
+.notif-item:hover{background:rgba(212,212,170,.15)}
+.notif-item.urg{border-left-color:var(--err);background:rgba(188,71,73,.06)}
+.notif-item.warn{border-left-color:var(--warn);background:rgba(221,161,94,.06)}
+.notif-item.soon{border-left-color:var(--info)}
+.notif-item.high{border-left-color:#9D4EDD;background:rgba(157,78,221,.05)}
+.notif-icon{font-size:18px;flex-shrink:0;margin-top:2px}
+.notif-content{flex:1;min-width:0}
+.notif-title{font-size:13px;font-weight:600;color:var(--tx);line-height:1.3;margin-bottom:2px}
+.notif-meta{font-size:11px;color:var(--txl);line-height:1.4}
+.notif-days{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0;align-self:center;white-space:nowrap}
+.notif-days.urg{background:var(--err);color:#fff}.notif-days.warn{background:var(--warn);color:#fff}.notif-days.soon{background:var(--info);color:#fff}.notif-days.high{background:#9D4EDD;color:#fff}
+.notif-empty{padding:40px 20px;text-align:center;color:var(--txl);font-size:13px}
+.notif-empty-icon{font-size:36px;margin-bottom:8px;display:block}
+.ct-tag{font-size:10px;background:rgba(64,145,108,.1);color:var(--pri-s);padding:1px 8px;border-radius:10px;font-weight:600;text-transform:uppercase}
+.pd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;flex-shrink:0}
+.pd-alta{background:var(--err)}.pd-media{background:var(--warn)}.pd-baja{background:var(--ok)}
+
+/* KPI */
+.kpi{display:flex;align-items:center;gap:16px}.ki{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.kv{font-size:26px;font-weight:700;line-height:1.1}.kl{font-size:12px;color:var(--txl);margin-top:2px}.kt{font-size:11px;font-weight:600;margin-top:2px}
+
+/* Table */
+.tw{overflow-x:auto}table{width:100%;border-collapse:separate;border-spacing:0 8px}
+th{text-align:left;padding:8px 16px;font-size:11px;font-weight:600;color:var(--txl);text-transform:uppercase;letter-spacing:.5px}
+td{padding:12px 16px;font-size:13px}tr.ra{background:#fafaf4}tr.rn{background:var(--card)}
+td:first-child{border-radius:12px 0 0 12px}td:last-child{border-radius:0 12px 12px 0}
+
+.pt{flex:1;height:6px;background:#eee;border-radius:3px;overflow:hidden}.pf{height:100%;border-radius:3px;transition:width 1s}
+
+/* Task */
+.ti{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(212,212,170,.1);transition:opacity .3s}
+.ti.dn{opacity:.45}.tt{font-size:14px;font-weight:500}.tt.sk{text-decoration:line-through}
+.tm{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;align-items:center}
+.tdl{background:none;border:none;color:var(--err);font-size:15px;padding:4px 6px;opacity:.4;transition:opacity .2s}.tdl:hover{opacity:1}
+
+.cr{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(212,212,170,.1)}
+.ci{flex:1}.ctt{font-size:14px;font-weight:600}.cs{font-size:12px;color:var(--txl);margin-top:2px}
+
+.gi{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--txl);line-height:1.5;margin-bottom:8px}
+.gb{color:var(--pri-s);font-weight:700;min-width:16px}.gc{margin:0;font-size:14px;color:var(--txl);line-height:1.7}
+
+/* Buttons */
+.bp{padding:10px 20px;border-radius:10px;border:none;background:var(--pri);color:#fff;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:background .2s}.bp:hover{background:var(--pri-l)}
+.bs{padding:8px 16px;border-radius:8px;border:1px solid var(--brd);background:var(--card);color:var(--tx);font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px;transition:all .2s}.bs:hover{border-color:var(--pri-s);color:var(--pri-s)}
+.bl{background:none;border:none;color:var(--pri-s);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.be{background:none;border:none;color:var(--txl);padding:4px;opacity:.5;transition:opacity .2s;font-size:14px}.be:hover{opacity:1;color:var(--pri-s)}
+.bdel{background:none;border:none;color:var(--err);padding:4px;opacity:.4;transition:opacity .2s;font-size:14px}.bdel:hover{opacity:1}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+
+/* Forms */
+.fg{margin-bottom:14px}.fg label{display:block;font-size:12px;font-weight:600;color:var(--txl);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.fi{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--brd);font-size:13px;outline:none;transition:border .2s}.fi:focus{border-color:var(--pri-s)}
+select.fi{background:var(--card)}
+.fr{display:flex;gap:10px;flex-wrap:wrap}.fr .fg{flex:1;min-width:140px}
+
+/* Modal */
+.mo{display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(0,0,0,.35);animation:mIn .2s ease}
+.mo.open{display:flex}
+.mc{background:var(--card);border-radius:20px;padding:28px;width:90%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15);animation:mSl .25s ease}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.mh h2{font-size:18px;font-weight:700;margin:0}
+.mx{background:none;border:none;font-size:22px;color:var(--txl);padding:4px}.mx:hover{color:var(--tx)}
+.mf{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+@keyframes mIn{from{opacity:0}to{opacity:1}}
+@keyframes mSl{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Section anim */
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.sc{animation:fadeIn .35s ease forwards}
+
+.oc-id{font-weight:600;color:var(--pri-s);font-family:'Courier New',monospace}
+.ck{font-size:13px;color:var(--txl);line-height:1.9}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--pri);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:500;z-index:300;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;box-shadow:0 4px 15px rgba(0,0,0,.15)}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* Responsive */
+@media(max-width:768px){.sidebar{position:fixed;z-index:100;height:100vh}.sidebar.closed{width:0}.g2{grid-template-columns:1fr}.ct{padding:16px}.hd{padding:14px 16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-hd"><div class="sub">Municipalidad de</div><div class="ttl">Llay-Llay</div><div class="role">Panel del Administrador Municipal</div></div>
+    <nav class="sb-nav" id="nav"></nav>
+    <div class="sb-ft">
+      <div style="margin-bottom:8px"><button class="bs" id="gdriveBtn" onclick="gdriveConnect()" style="width:100%;justify-content:center;color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2);margin-bottom:6px;background:rgba(58,134,168,.2)">☁️ Conectar Drive</button><button class="bs" id="gdriveSyncBtn" onclick="gdriveSyncNow()" style="width:100%;justify-content:center;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.15);margin-bottom:6px;display:none">🔄 Sincronizar ahora</button><div id="gdriveStatus" style="font-size:10px;color:rgba(255,255,255,.5);text-align:center;padding:4px 0;display:none"></div></div>
+      <div style="margin-bottom:8px"><button class="bs" onclick="toggleDark()" style="width:100%;justify-content:center;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.15);margin-bottom:6px" id="darkBtn">🌙 Modo oscuro</button><button class="bs" onclick="generarReporte()" style="width:100%;justify-content:center;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.15);margin-bottom:6px">🖨 Generar reporte</button><button class="bs" onclick="exportData()" style="width:100%;justify-content:center;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.15);margin-bottom:6px">📥 Exportar respaldo</button><button class="bs" onclick="document.getElementById('importFileInput').click()" style="width:100%;justify-content:center;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.15)">📤 Importar respaldo</button><input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(this)"></div>
+      <div style="margin-bottom:8px"><button class="bs" onclick="if(confirm('¿Restaurar datos de ejemplo?')){localStorage.removeItem('mll_data');location.reload()}" style="width:100%;justify-content:center;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.15)">🔄 Restaurar ejemplo</button></div>
+      v2.0 — Datos reales al Feb. 2026<br>Normativa: DS 661/2024<br>Municipalidad de Llay-Llay © 2026
+    </div>
+  </aside>
+  <div class="mn">
+    <header class="hd">
+      <button class="mb" onclick="document.getElementById('sidebar').classList.toggle('closed')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+      <div style="flex:1;display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div><h1 id="hTitle">Resumen</h1><div class="dt" id="hDate"></div></div><div style="flex:1;min-width:180px;max-width:360px;position:relative"><input type="text" id="globalSearch" placeholder="🔍 Buscar en todo el panel..." oninput="doGlobalSearch(this.value)" onblur="setTimeout(function(){var r=document.getElementById(\'gsResults\');if(r)r.style.display=\'none\'},200)" onfocus="if(this.value)doGlobalSearch(this.value)" style="width:100%;padding:8px 14px;border:1px solid rgba(212,212,170,.4);border-radius:20px;background:rgba(254,250,224,.5);font-size:12px;outline:none;font-family:inherit"><div id="gsResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);margin-top:4px;max-height:360px;overflow-y:auto;z-index:100"></div></div></div>
+      <div style="background:linear-gradient(135deg,#40916C,#2D6A4F);color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 8px rgba(64,145,108,.3);margin-right:8px">v17b · HOY+AGENDA FIX</div>
+      <div class="hr"><div class="nt" id="notifBell" onclick="toggleNotifs(event)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#52796F" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div class="notif-counter" id="notifCounter" style="display:none">0</div></div><div class="av">JA</div></div>
+    </header>
+    <div id="notifPanel" class="notif-panel">
+      <div class="notif-header"><h3>🔔 Centro de Notificaciones</h3><button class="nx" onclick="toggleNotifs(event)">✕</button></div>
+      <div class="notif-body" id="notifBody"></div>
+    </div>
+    <div class="ct" id="content"></div>
+  </div>
+</div>
+<div id="modal" class="mo"><div class="mc" id="mBody"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+// ══════ DEFAULT DATA ══════
+var DEF={
+kpis:[{label:"Ejecución Presupuestaria",value:"19,1%",trend:"Feb 2026",color:"#40916C",tc:"#3A86A8"},{label:"Percibido Acum.",value:"$1.517 MM",trend:"12,7% del vigente",color:"#3A86A8",tc:"#40916C"},{label:"Pagado Acum.",value:"$1.354 MM",trend:"11,4% del vigente",color:"#40916C",tc:"#52796F"},{label:"Plazos Contraloría",value:"3",trend:"urgente",color:"#DDA15E",tc:"#BC4749"}],
+budget:{months:["Ene","Feb"],ingresos:[749,768],gastos:[655,699],totals:[{l:"Presupuesto Vigente",v:"$11.924 MM",s:"Ley Presup. 2026"},{l:"Devengado Acum.",v:"$2.279 MM",s:"19,1% ejecutado"},{l:"Percibido Acum.",v:"$1.517 MM",s:"Ingresos efectivos"},{l:"Pagado Acum.",v:"$1.354 MM",s:"Gastos efectivos"}],cuentas:{c21:{vigente:4693500000,devengado:619744336,pagado:585889161},c22:{vigente:1870100000,devengado:155400804,pagado:155400804},c24:{vigente:2210630000,devengado:288482060,pagado:288482060}}},
+units:[{name:"DAF",full:"Dir. Administración y Finanzas",color:"#40916C",compl:82,taskList:[{id:101,title:"Revisar ejecución presupuestaria mensual",pri:"alta",done:false},{id:102,title:"Cuadratura de cuentas bancarias",pri:"media",done:false},{id:103,title:"Preparar planilla CIPA para Contraloría",pri:"alta",done:false}]},{name:"DOM",full:"Dir. Obras Municipales",color:"#3A86A8",compl:78,taskList:[{id:201,title:"Inspección obras Estadio Municipal",pri:"alta",done:false},{id:202,title:"Revisión permisos de edificación pendientes",pri:"media",done:false},{id:203,title:"Fiscalización extracción de áridos río Aconcagua",pri:"media",done:false}]},{name:"DIDECO",full:"Dir. Desarrollo Comunitario",color:"#D4A373",compl:88,taskList:[{id:301,title:"Coordinar programa Adulto Mayor",pri:"media",done:false},{id:302,title:"Atención OIRS — casos pendientes",pri:"alta",done:false}]},{name:"SECPLAN",full:"Secretaría Planificación",color:"#7B68AE",compl:91,taskList:[{id:401,title:"Avance actualización Plan Regulador",pri:"alta",done:false},{id:402,title:"Elaborar bases licitación pavimentación",pri:"media",done:false}]},{name:"Sec. Municipal",full:"Secretaría Municipal",color:"#BC4749",compl:85,taskList:[{id:501,title:"Despacho decretos alcaldicios pendientes",pri:"alta",done:false},{id:502,title:"Preparar acta Sesión Concejo",pri:"alta",done:false},{id:503,title:"Actualizar registro de ordenanzas",pri:"baja",done:false}]},{name:"Control",full:"Dirección de Control",color:"#2D6A4F",compl:93,taskList:[{id:601,title:"Auditoría interna procesos compras",pri:"alta",done:false},{id:602,title:"Revisión rendiciones de fondos",pri:"media",done:false}]},{name:"Jurídica",full:"Asesoría Jurídica",color:"#1B4332",compl:87,taskList:[{id:701,title:"Seguimiento causa laboral psicóloga Liceo",pri:"alta",done:false},{id:702,title:"Preparar respuesta Oficio CGR N°59418",pri:"alta",done:false},{id:703,title:"Revisar contratos a honorarios",pri:"media",done:false}]},{name:"Seguridad",full:"Dir. Seguridad Pública",color:"#52796F",compl:80,taskList:[{id:801,title:"Coordinación con Carabineros y PDI",pri:"media",done:false},{id:802,title:"Programa Seguridad Barrial — informe",pri:"media",done:false}]},{name:"Gabinete-Concejo",full:"Gabinete Alcaldía y Concejo Municipal",color:"#C9A227",compl:75,taskList:[{id:901,title:"Preparar materias para Sesión Ordinaria del Concejo",pri:"alta",done:false},{id:902,title:"Responder solicitudes de concejales pendientes",pri:"alta",done:false},{id:903,title:"Coordinar agenda semanal del Alcalde",pri:"alta",done:false},{id:904,title:"Audiencias ciudadanas pendientes de respuesta",pri:"media",done:false},{id:905,title:"Redacción minutas de reuniones de gabinete",pri:"media",done:false},{id:906,title:"Seguimiento acuerdos del Concejo Municipal",pri:"alta",done:false},{id:907,title:"Coordinación con asociaciones gremiales y juntas vecinales",pri:"media",done:false}]},{name:"DIRDEC",full:"Dir. Desarrollo Económico Local",color:"#E76F51",compl:78,taskList:[{id:1001,title:"Renovación masiva patentes comerciales",pri:"alta",done:false},{id:1002,title:"Postulación a fondos de fomento productivo",pri:"alta",done:false},{id:1003,title:"Apoyo a emprendedores locales — taller mensual",pri:"media",done:false},{id:1004,title:"Coordinación con Cámara de Comercio comunal",pri:"media",done:false},{id:1005,title:"Fiscalización patentes de alcoholes",pri:"alta",done:false}]},{name:"DIMAO",full:"Dir. Medio Ambiente, Aseo y Ornato",color:"#588157",compl:82,taskList:[{id:1101,title:"Supervisión recolección domiciliaria de residuos",pri:"alta",done:false},{id:1102,title:"Mantención áreas verdes y plazas",pri:"media",done:false},{id:1103,title:"Plan de gestión de residuos comunal",pri:"alta",done:false},{id:1104,title:"Fiscalización ambiental — denuncias pendientes",pri:"alta",done:false},{id:1105,title:"Programa de reciclaje y puntos limpios",pri:"media",done:false},{id:1106,title:"Coordinación retiro de ramas y escombros",pri:"baja",done:false}]},{name:"Tránsito",full:"Dir. Tránsito y Transporte Público",color:"#023E8A",compl:85,taskList:[{id:1201,title:"Proceso permisos de circulación 2026",pri:"alta",done:false},{id:1202,title:"Reposición de señalética vial dañada",pri:"media",done:false},{id:1203,title:"Otorgamiento licencias de conducir",pri:"media",done:false},{id:1204,title:"Coordinación con SECTRA y MTT",pri:"media",done:false},{id:1205,title:"Estudio de demarcación de pasos peatonales",pri:"baja",done:false}]},{name:"Solicitudes Alcalde",full:"Tareas Directas del Alcalde",color:"#9D4EDD",compl:70,taskList:[{id:1301,title:"Gestión de compromiso con vecinos sector El Escorial",pri:"alta",done:false},{id:1302,title:"Preparar minuta para reunión con Gobernador",pri:"alta",done:false},{id:1303,title:"Coordinar evento Aniversario Comunal",pri:"alta",done:false},{id:1304,title:"Audiencia VIP — empresarios locales",pri:"media",done:false},{id:1305,title:"Seguimiento promesas de campaña gestión 2024-2028",pri:"alta",done:false}]},{name:"RRHH",full:"Dir. Recursos Humanos",color:"#FB8500",compl:80,taskList:[{id:1401,title:"Procesar planilla de remuneraciones mensual",pri:"alta",done:false},{id:1402,title:"Renovación contratas y honorarios 2026",pri:"alta",done:false},{id:1403,title:"Calificaciones funcionarias anuales",pri:"media",done:false},{id:1404,title:"Plan anual de capacitación funcionarios",pri:"media",done:false},{id:1405,title:"Gestión licencias médicas y permisos",pri:"alta",done:false},{id:1406,title:"Declaraciones juradas de patrimonio e intereses",pri:"alta",done:false},{id:1407,title:"Control de asistencia y horarios",pri:"media",done:false}]},{name:"OIRS",full:"Oficina de Información, Reclamos y Sugerencias",color:"#06A77D",compl:85,taskList:[{id:1501,title:"Responder solicitudes Ley 20.285 (Transparencia)",pri:"alta",done:false},{id:1502,title:"Tramitar reclamos ciudadanos pendientes",pri:"alta",done:false},{id:1503,title:"Reporte mensual de gestión OIRS",pri:"media",done:false},{id:1504,title:"Atención presencial y telefónica",pri:"media",done:false},{id:1505,title:"Derivación a unidades competentes",pri:"media",done:false},{id:1506,title:"Seguimiento de respuestas dentro de plazo legal",pri:"alta",done:false}]}],
+compliance:[{id:1,title:"Informe CIPA patentes 2025",entity:"Contraloría Regional",deadline:"2026-04-15",status:"en_progreso",priority:"alta"},{id:2,title:"Rendición Fondos SUBDERE",entity:"SUBDERE",deadline:"2026-04-30",status:"pendiente",priority:"alta"},{id:3,title:"Cuenta Pública Anual",entity:"Concejo Municipal",deadline:"2026-04-30",status:"pendiente",priority:"media"},{id:4,title:"Declaraciones juradas",entity:"Contraloría",deadline:"2026-05-15",status:"pendiente",priority:"media"},{id:5,title:"Informe ejecución presup. Q1",entity:"Concejo",deadline:"2026-04-20",status:"completado",priority:"alta"}],
+projects:[{id:1,name:"Mejoramiento Alumbrado Público",progress:75,budget:"$45M",unit:"DOM",status:"ejecucion",financiamiento:"FNDR",urgencia:"alta"},{id:2,name:"Programa Adulto Mayor",progress:90,budget:"$12M",unit:"DIDECO",status:"ejecucion",financiamiento:"Municipal",urgencia:"media"},{id:3,name:"Actualización Plan Regulador",progress:30,budget:"$28M",unit:"SECPLAN",status:"diseno",financiamiento:"SUBDERE",urgencia:"alta"},{id:4,name:"Reparación Estadio Municipal",progress:55,budget:"$65M",unit:"DOM",status:"ejecucion",financiamiento:"FNDR",urgencia:"media"},{id:5,name:"Sistema Gestión Documental",progress:15,budget:"$18M",unit:"Sec. Mun.",status:"licitacion",financiamiento:"Municipal",urgencia:"baja"},{id:6,name:"Programa Seguridad Barrial",progress:40,budget:"$22M",unit:"Seguridad",status:"ejecucion",financiamiento:"PMU",urgencia:"alta"}],
+mercado:[{id:1,oc:"3882-05-LP26",nombre:"Reposición Pavimentos Urbanos",monto:"Según oferta",estado:"en_licitacion",tipo:"publica"},{id:2,oc:"3882-08-LP26",nombre:"Mejoramiento APR Sector Rural",monto:"Según oferta",estado:"adjudicada",tipo:"publica"},{id:3,oc:"3882-12-LE26",nombre:"Suministro Combustibles 2026",monto:"Según oferta",estado:"adjudicada",tipo:"publica"},{id:4,oc:"3882-15-LP26",nombre:"Construcción Multicancha El Escorial",monto:"Según oferta",estado:"en_licitacion",tipo:"publica"},{id:5,oc:"3882-18-LE26",nombre:"Mantención Vehículos Municipales",monto:"Según oferta",estado:"adjudicada",tipo:"publica"},{id:6,oc:"3882-21-LP26",nombre:"Mejoramiento Plaza de Armas",monto:"Según oferta",estado:"en_licitacion",tipo:"publica"},{id:7,oc:"3882-24-LE26",nombre:"Adquisición Equipamiento Computacional",monto:"Según oferta",estado:"adjudicada",tipo:"privada"},{id:8,oc:"3882-27-LP26",nombre:"Conservación Caminos Rurales",monto:"Según oferta",estado:"en_licitacion",tipo:"publica"},{id:9,oc:"3882-30-LE26",nombre:"Servicios de Aseo Edificios Municipales",monto:"Según oferta",estado:"adjudicada",tipo:"publica"},{id:10,oc:"3882-33-LE26",nombre:"Mantención Áreas Verdes",monto:"Según oferta",estado:"en_licitacion",tipo:"privada"}],
+tasks:[{id:1,title:"Reunión coordinación semanal con jefaturas",date:"2026-04-07",cat:"coordinación",done:false},{id:2,title:"Revisar borrador Reglamento Interno",date:"2026-04-08",cat:"normativa",done:false},{id:3,title:"Sesión Ordinaria Concejo Municipal",date:"2026-04-10",cat:"concejo",done:false},{id:4,title:"Reunión con Contraloría Regional",date:"2026-04-11",cat:"compliance",done:false},{id:5,title:"Despacho decretos alcaldicios",date:"2026-04-07",cat:"despacho",done:false},{id:6,title:"Supervisión obras Estadio",date:"2026-04-09",cat:"obras",done:false},{id:7,title:"Revisión ejecución presupuestaria",date:"2026-04-12",cat:"finanzas",done:false}],
+oficios:[{id:1,nOficio:"Oficio N°59418/2026",materia:"Solicita información sobre proceso CIPA — cobro de patentes municipales",origen:"Contraloría Regional Valparaíso",fechaRecep:"2026-03-10",plazo:30,fechaLimite:"2026-04-09",responsable:"DAF / Asesoría Jurídica",status:"en_progreso",obs:"Planilla Excel en preparación. Coordinación con DAF para datos."}],
+unitNotes:{"DAF":"","DOM":"","DIDECO":"","SECPLAN":"","Sec. Municipal":"","Control":"","Jurídica":"","Seguridad":"","Gabinete-Concejo":"","DIRDEC":"","DIMAO":"","Tránsito":"","Solicitudes Alcalde":"","RRHH":"","OIRS":""},
+sumarios:[{id:1,tipo:"investigacion",decreto:"DA N°125/2026",fechaDecreto:"2026-03-15",fiscal:"Por designar",materia:"Eventual incumplimiento de horario funcionarios DOM",plazoBase:5,status:"instruccion",obs:"Plazo prorrogado por 5 días adicionales"},{id:2,tipo:"sumario",decreto:"DA N°089/2026",fechaDecreto:"2026-02-20",fiscal:"Abogada Asesoría Jurídica",materia:"Irregularidad Orden de Compra Kimia SpA N°3882-312-SE25",plazoBase:20,status:"vista_fiscal",obs:"Vista fiscal en preparación"}],
+trimestrales:[],
+bitacora:[],
+procesosRelevantes:[{id:1,nombre:"Ejemplo: Licitación de Recolección de Basura",desc:"Proceso de licitación del servicio de recolección domiciliaria de residuos sólidos. Puedes editar este ejemplo o agregar los procesos que estés gestionando.",color:"#06A77D",etapas:[{id:5001,nombre:"Elaboración de bases técnicas",plazo:"2026-05-30",status:"en_progreso",obs:"Revisión en DOM y Jurídica"},{id:5002,nombre:"Publicación en Mercado Público",plazo:"2026-06-15",status:"pendiente",obs:""},{id:5003,nombre:"Apertura y evaluación ofertas",plazo:"2026-07-30",status:"pendiente",obs:""},{id:5004,nombre:"Adjudicación",plazo:"2026-08-15",status:"pendiente",obs:""}],notas:"Proceso crítico de continuidad del servicio. Coordinar con DIMAO."}],
+macroprocesos:[
+{id:1,nombre:"Modificación Planta de Personal",desc:"Proceso de reestructuración de la planta municipal conforme a Ley 18.695 y DFL 1/2006 del Ministerio del Interior.",color:"#BC4749",
+etapas:[{id:101,nombre:"Diagnóstico dotación actual",plazo:"2026-05-15",status:"en_progreso",obs:"Levantamiento de información con RRHH"},{id:102,nombre:"Propuesta técnica de nueva planta",plazo:"2026-06-30",status:"pendiente",obs:""},{id:103,nombre:"Informe jurídico de viabilidad",plazo:"2026-07-15",status:"pendiente",obs:""},{id:104,nombre:"Presentación a Concejo Municipal",plazo:"2026-08-15",status:"pendiente",obs:"Requiere quórum calificado"},{id:105,nombre:"Envío a Contraloría para toma de razón",plazo:"2026-09-30",status:"pendiente",obs:""},{id:106,nombre:"Publicación Diario Oficial",plazo:"2026-11-15",status:"pendiente",obs:""}],
+notas:"Coordinar con SUBDERE para asistencia técnica. Revisar Dictamen CGR N°E160244/2021 sobre plantas municipales."},
+{id:2,nombre:"Digitalización Municipal",desc:"Implementación de sistema de gestión documental electrónica y firma electrónica avanzada conforme a Ley 21.180 (Transformación Digital del Estado).",color:"#3A86A8",
+etapas:[{id:201,nombre:"Evaluación plataformas disponibles (ChileDigital, SIMPLE)",plazo:"2026-05-30",status:"en_progreso",obs:""},{id:202,nombre:"Licitación sistema documental",plazo:"2026-06-30",status:"pendiente",obs:""},{id:203,nombre:"Capacitación funcionarios — Fase 1",plazo:"2026-08-15",status:"pendiente",obs:"Priorizar DAF, Sec. Municipal y Control"},{id:204,nombre:"Implementación firma electrónica avanzada",plazo:"2026-09-30",status:"pendiente",obs:""},{id:205,nombre:"Migración documentación física a digital",plazo:"2026-12-15",status:"pendiente",obs:""},{id:206,nombre:"Marcha blanca y evaluación",plazo:"2027-02-28",status:"pendiente",obs:""}],
+notas:"Plazo legal Ley 21.180: municipios deben implementar antes de nov 2027. Revisar convenio con SEGPRES."},
+{id:3,nombre:"Municipalización CESFAM",desc:"Traspaso de administración del Centro de Salud Familiar desde el Servicio de Salud a la gestión municipal directa, conforme a DFL 1/2006 y Ley 19.378.",color:"#9D4EDD",
+etapas:[{id:301,nombre:"Mesa técnica con Servicio de Salud Aconcagua",plazo:"2026-05-15",status:"en_progreso",obs:"Primera reunión realizada"},{id:302,nombre:"Estudio de factibilidad financiera",plazo:"2026-06-30",status:"pendiente",obs:"Evaluar impacto en presupuesto de salud municipal"},{id:303,nombre:"Elaboración convenio de traspaso",plazo:"2026-08-30",status:"pendiente",obs:""},{id:304,nombre:"Aprobación Concejo Municipal",plazo:"2026-09-15",status:"pendiente",obs:""},{id:305,nombre:"Traspaso de personal (Ley 19.378)",plazo:"2026-11-30",status:"pendiente",obs:"Estatuto Atención Primaria"},{id:306,nombre:"Inicio operación municipal CESFAM",plazo:"2027-01-15",status:"pendiente",obs:""}],
+notas:"Proceso complejo. Requiere coordinación con MINSAL, Serv. Salud Aconcagua, SUBDERE y Concejo. Evaluar aporte per cápita basal."}
+]
+};
+
+// ══════ STATE ══════
+var APP_VERSION="2026.04.13.v17b";
+var D;
+function loadData(){
+  try{
+    var savedVersion=localStorage.getItem("mll_version");
+    var s=localStorage.getItem("mll_data");
+    if(!s){
+      D=JSON.parse(JSON.stringify(DEF));
+    }else{
+      D=JSON.parse(s);
+      // Migration: ensure new fields/units exist without losing user data
+      if(!D.oficios)D.oficios=JSON.parse(JSON.stringify(DEF.oficios));
+      if(!D.sumarios)D.sumarios=JSON.parse(JSON.stringify(DEF.sumarios));
+      if(!D.trimestrales)D.trimestrales=[];
+      if(!D.macroprocesos)D.macroprocesos=JSON.parse(JSON.stringify(DEF.macroprocesos));
+      if(!D.procesosRelevantes)D.procesosRelevantes=JSON.parse(JSON.stringify(DEF.procesosRelevantes));
+      if(!D.bitacora)D.bitacora=[];
+      // Force refresh mercado if old 2025 licitaciones detected
+      if(D.mercado&&D.mercado.some(function(m){return(m.oc||"").indexOf("25")>=0&&(m.oc||"").indexOf("2025")<0&&/-L[PEQ]25$/.test(m.oc||"")})){
+        D.mercado=JSON.parse(JSON.stringify(DEF.mercado));
+      }
+      if(D.budget&&!D.budget.cuentas)D.budget.cuentas=DEF.budget.cuentas;
+      if(!D.unitNotes)D.unitNotes={};
+      if(!D.units)D.units=JSON.parse(JSON.stringify(DEF.units));
+      // Add any new units from DEF that don't exist in user data
+      DEF.units.forEach(function(defU){
+        var exists=D.units.some(function(u){return u.name===defU.name});
+        if(!exists){
+          D.units.push(JSON.parse(JSON.stringify(defU)));
+        }
+      });
+      // Ensure each unit has a taskList array and tasks have obs field
+      D.units.forEach(function(u){
+        if(!u.taskList)u.taskList=[];
+        u.taskList.forEach(function(t){if(typeof t.obs==="undefined")t.obs=""});
+      });
+    }
+    localStorage.setItem("mll_version",APP_VERSION);
+    localStorage.setItem("mll_data",JSON.stringify(D));
+  }catch(e){D=JSON.parse(JSON.stringify(DEF))}
+}
+function save(){try{localStorage.setItem("mll_data",JSON.stringify(D));localStorage.setItem("mll_version",APP_VERSION)}catch(e){}}
+function nid(){return Date.now()+Math.floor(Math.random()*1000)}
+
+// ══════ HELPERS ══════
+var sec="hoy";var charts=[];
+function dc(){charts.forEach(function(c){c.destroy()});charts=[]}
+function fd(d){return new Date(d+"T12:00:00").toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"})}
+var BL={completado:"Completado",en_progreso:"En Progreso",pendiente:"Pendiente",adjudicada:"Adjudicada",en_proceso:"En Proceso",ejecucion:"Ejecución",diseno:"Diseño",licitacion:"Licitación",vencido:"Vencido",respondido:"Respondido",en_licitacion:"En Licitación",publica:"Pública",privada:"Privada"};
+function bd(s){return'<span class="bd bd-'+s+'">'+(BL[s]||s)+'</span>'}
+function dot(p){return'<span class="pd pd-'+p+'"></span>'}
+function pc(p){return p>70?"var(--ok)":p>40?"var(--warn)":"var(--info)"}
+function daysLeft(dl){var t=new Date(dl+"T23:59:59")-new Date();return Math.ceil(t/86400000)}
+function daysClass(d){return d<0?"overdue":d<=5?"urgent":d<=15?"warning":"ok"}
+function daysLabel(d){return d<0?d+" días (VENCIDO)":d===0?"HOY":d===1?"1 día":d+" días"}
+function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},2200)}
+
+// ══════ MODAL ══════
+function openModal(html){document.getElementById("mBody").innerHTML=html;document.getElementById("modal").classList.add("open")}
+function closeModal(){document.getElementById("modal").classList.remove("open")}
+document.getElementById("modal").addEventListener("click",function(e){if(e.target===this)closeModal()});
+
+// ══════ NAV ══════
+var NV=[
+{id:"hoy",l:"Vista Hoy",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'},
+{id:"resumen",l:"Resumen General",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'},
+{id:"unidades",l:"Unidades Municipales",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>'},
+{id:"presupuesto",l:"Presupuesto",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'},
+{id:"trimestrales",l:"Inf. Trimestrales",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="9" x2="9" y1="3" y2="21"/><line x1="15" x2="15" y1="3" y2="21"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="3" x2="21" y1="15" y2="15"/></svg>'},
+{id:"proyectos",l:"Proyectos",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'},
+{id:"compliance",l:"Contraloría / Legal",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'},
+{id:"oficios",l:"Oficios Contraloría",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>'},
+{id:"sumarios",l:"Sumarios e Investig.",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 12v5"/><path d="M11 7v10"/><path d="M15 10v7"/><path d="M19 5v12"/></svg>'},
+{id:"macroprocesos",l:"Macroprocesos",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'},
+{id:"procesosrel",l:"Procesos Relevantes",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1"/><path d="m9 14 2 2 4-4"/></svg>'},
+{id:"contratacion",l:"Contratación Pública",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>'},
+{id:"tareas",l:"Agenda & Tareas",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>'},
+{id:"calendario",l:"Calendario",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>'},
+{id:"bitacora",l:"Bitácora",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>'},
+{id:"guia",l:"Guía del Cargo",sv:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>'}
+];
+function buildNav(){var n=document.getElementById("nav");var h="";for(var i=0;i<NV.length;i++){h+='<button class="nb'+(NV[i].id===sec?' act':'')+'" data-id="'+NV[i].id+'">'+NV[i].sv+'<span>'+NV[i].l+'</span></button>'}n.innerHTML=h;n.querySelectorAll(".nb").forEach(function(b){b.addEventListener("click",function(){sec=this.getAttribute("data-id");buildNav();render();if(window.innerWidth<=768)document.getElementById("sidebar").classList.add("closed")})})}
+
+function render(){dc();var el=document.getElementById("content");var s=NV.filter(function(x){return x.id===sec})[0];document.getElementById("hTitle").innerHTML=s.sv.replace(/17/g,"20").replace('stroke="currentColor"','stroke="#40916C"')+" "+s.l;el.innerHTML='<div class="sc" id="sc"></div>';var fn={hoy:rHoy,resumen:rResumen,unidades:rUnidades,presupuesto:rPresupuesto,trimestrales:rTrimestrales,proyectos:rProyectos,compliance:rCompliance,oficios:rOficios,sumarios:rSumarios,macroprocesos:rMacroprocesos,procesosrel:rProcesosRel,contratacion:rContratacion,tareas:rTareas,calendario:rCalendario,bitacora:rBitacora,guia:rGuia};if(fn[sec])fn[sec]();el.scrollTop=0;updateNotifBadge()}
+
+// ══════ RESUMEN ══════
+function rResumen(){
+  var el=document.getElementById("sc");
+  var h='<div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Indicadores Clave</h3><button class="bs" onclick="editKPI(-1)">✏️ Editar KPIs</button></div>';
+  h+='<div class="g g4 mb24">';
+  D.kpis.forEach(function(k){h+='<div class="cd cds kpi"><div class="ki" style="background:'+k.color+'18"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+k.color+'" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div><div class="kv">'+k.value+'</div><div class="kl">'+k.label+'</div><div class="kt" style="color:'+k.tc+'">'+k.trend+'</div></div></div>'});
+  h+='</div><div class="g g2 g20 mb24"><div class="cd"><h3 style="margin:0 0 16px;font-size:15px;font-weight:600">Ejecución Presupuestaria Real (MM$) — Balance Feb. 2026</h3><div style="position:relative;height:220px"><canvas id="cL"></canvas></div></div>';
+  h+='<div class="cd"><h3 style="margin:0 0 16px;font-size:15px;font-weight:600">Distribución del Gasto</h3><div style="display:flex;align-items:center;gap:16px"><div style="width:55%;position:relative;height:200px"><canvas id="cP"></canvas></div><div style="display:flex;flex-direction:column;gap:10px">';
+  [{name:"Personal",value:39.4,color:"#1B4332"},{name:"Inversión",value:12.4,color:"#40916C"},{name:"Transf. Corrientes",value:18.5,color:"#D4A373"},{name:"Bienes y Serv.",value:15.7,color:"#3A86A8"},{name:"Otros",value:14,color:"#7B68AE"}].forEach(function(d){h+='<div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:3px;background:'+d.color+'"></div><span style="font-size:13px">'+d.name+'</span><span style="font-size:13px;font-weight:700;margin-left:auto">'+d.value+'%</span></div>'});
+  h+='</div></div></div></div>';
+  h+='<div class="g g2 g20"><div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="margin:0;font-size:15px;font-weight:600">Próximas Tareas</h3><button class="bl" onclick="sec=\'tareas\';buildNav();render()">Ver todas ›</button></div>';
+  D.tasks.filter(function(t){return!t.done}).slice(0,4).forEach(function(t){h+='<div class="ti"><input type="checkbox" onchange="tToggle('+t.id+')"><div style="flex:1"><div style="font-size:13px;font-weight:500">'+t.title+'</div><div style="font-size:11px;color:var(--txl);margin-top:2px">📅 '+fd(t.date)+'</div></div></div>'});
+  h+='</div><div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="margin:0;font-size:15px;font-weight:600">Plazos Contraloría</h3><button class="bl" onclick="sec=\'compliance\';buildNav();render()">Ver todos ›</button></div>';
+  var ofiOverdue=D.oficios?D.oficios.filter(function(o){return o.status!=="respondido"&&o.status!=="completado"&&daysLeft(o.fechaLimite)<0}).length:0;
+  var ofiUrgent=D.oficios?D.oficios.filter(function(o){return o.status!=="respondido"&&o.status!=="completado"&&daysLeft(o.fechaLimite)>=0&&daysLeft(o.fechaLimite)<=7}).length:0;
+  if(ofiOverdue>0){h+='<div style="background:#BC4749;color:#fff;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:12px;font-weight:600;cursor:pointer" onclick="sec=\'oficios\';buildNav();render()">🚨 '+ofiOverdue+' oficio'+(ofiOverdue>1?"s":"")+' VENCIDO'+(ofiOverdue>1?"S":"")+' — Haz clic para ver</div>';}
+  else if(ofiUrgent>0){h+='<div style="background:#DDA15E;color:#fff;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:12px;font-weight:600;cursor:pointer" onclick="sec=\'oficios\';buildNav();render()">⏰ '+ofiUrgent+' oficio'+(ofiUrgent>1?"s":"")+' próximo'+(ofiUrgent>1?"s":"")+' a vencer — Haz clic para ver</div>';}
+  D.compliance.filter(function(c){return c.status!=="completado"}).slice(0,4).forEach(function(c){h+='<div class="cr">'+dot(c.priority)+'<div class="ci"><div class="ctt" style="font-size:13px">'+c.title+'</div><div class="cs" style="font-size:11px">'+c.entity+' — '+fd(c.deadline)+'</div></div>'+bd(c.status)+'</div>'});
+  h+='</div></div>';
+  el.innerHTML=h;
+  var b=D.budget;
+  var c1=document.getElementById("cL");if(c1)charts.push(new Chart(c1,{type:"line",data:{labels:b.months,datasets:[{label:"Ingresos",data:b.ingresos,borderColor:"#40916C",backgroundColor:"rgba(64,145,108,.1)",fill:true,tension:.3,pointRadius:4,pointBackgroundColor:"#40916C",borderWidth:2.5},{label:"Gastos",data:b.gastos,borderColor:"#BC4749",backgroundColor:"rgba(188,71,73,.08)",fill:true,tension:.3,pointRadius:4,pointBackgroundColor:"#BC4749",borderWidth:2.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:16,font:{family:"DM Sans",size:12}}}},scales:{x:{grid:{display:false},ticks:{font:{family:"DM Sans",size:12},color:"#52796F"}},y:{grid:{color:"#f0f0e0"},ticks:{font:{family:"DM Sans",size:12},color:"#52796F"}}}}}));
+  var c2=document.getElementById("cP");if(c2)charts.push(new Chart(c2,{type:"doughnut",data:{labels:["Personal (39,4%)","Inversión (12,4%)","Transf. Corrientes (18,5%)","Bienes y Serv. (15,7%)","Otros (14%)"],datasets:[{data:[39.4,12.4,18.5,15.7,14],backgroundColor:["#1B4332","#40916C","#D4A373","#3A86A8","#7B68AE"],borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,cutout:"62%",plugins:{legend:{display:false}}}}));
+}
+
+function editKPI(){
+  var h='<div class="mh"><h2>Editar Indicadores (KPIs)</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  D.kpis.forEach(function(k,i){h+='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center"><input class="fi" style="flex:2" id="kl'+i+'" value="'+k.label+'"><input class="fi" style="flex:1" id="kv'+i+'" value="'+k.value+'"><input class="fi" style="width:70px" id="kt'+i+'" value="'+k.trend+'"></div>'});
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveKPIs()">Guardar</button></div>';
+  openModal(h);
+}
+function saveKPIs(){D.kpis.forEach(function(k,i){k.label=document.getElementById("kl"+i).value;k.value=document.getElementById("kv"+i).value;k.trend=document.getElementById("kt"+i).value});save();closeModal();render();toast("KPIs actualizados")}
+
+// ══════ UNIDADES ══════
+function rUnidades(){
+  var el=document.getElementById("sc");
+  if(!D.unitNotes)D.unitNotes={};
+  var h='<p style="font-size:14px;color:var(--txl);margin-bottom:20px;line-height:1.6">Coordinas directamente estas unidades. Haz clic en <strong>"Ver tareas"</strong> para gestionar las tareas de cada dirección, y usa las notas para registrar observaciones.</p><div class="g gu g20">';
+  D.units.forEach(function(u,i){
+    if(!u.taskList)u.taskList=[];
+    var note=D.unitNotes[u.name]||"";
+    var pendCount=u.taskList.filter(function(t){return!t.done}).length;
+    var doneCount=u.taskList.filter(function(t){return t.done}).length;
+    var totalCount=u.taskList.length;
+    h+='<div class="cd cdu"><div style="display:flex;align-items:center;gap:14px;margin-bottom:14px"><div style="width:44px;height:44px;border-radius:12px;background:'+u.color+'15;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+u.color+'" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div style="flex:1"><div style="font-size:16px;font-weight:700">'+u.name+'</div><div style="font-size:12px;color:var(--txl)">'+u.full+'</div></div><button class="be" onclick="editUnit('+i+')" title="Editar unidad">✏️</button></div>';
+    h+='<div style="display:flex;gap:12px;margin-bottom:12px"><div style="background:'+u.color+'10;border-radius:8px;padding:6px 12px;flex:1"><div style="font-size:11px;color:var(--txl)">Pendientes</div><div style="font-size:18px;font-weight:700;color:'+u.color+'">'+pendCount+'</div></div><div style="background:rgba(64,145,108,.1);border-radius:8px;padding:6px 12px;flex:1"><div style="font-size:11px;color:var(--txl)">Completadas</div><div style="font-size:18px;font-weight:700;color:var(--ok)">'+doneCount+'</div></div></div>';
+    h+='<button class="bs" style="width:100%;justify-content:center;margin-bottom:10px" onclick="viewUnitTasks('+i+')">📋 Ver tareas ('+totalCount+')</button>';
+    h+='<div class="unit-notes-label">📝 Notas / Observaciones:</div>';
+    h+='<textarea class="unit-notes" data-unit="'+u.name+'" onchange="saveUnitNote(this)" placeholder="Escribe observaciones sobre esta unidad...">'+note+'</textarea>';
+    h+='</div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+function saveUnitNote(el){if(!D.unitNotes)D.unitNotes={};D.unitNotes[el.getAttribute("data-unit")]=el.value;save();toast("Nota guardada")}
+function editUnit(i){var u=D.units[i];openModal('<div class="mh"><h2>Editar '+u.name+'</h2><button class="mx" onclick="closeModal()">✕</button></div><div class="fr"><div class="fg"><label>Nombre corto</label><input class="fi" id="un" value="'+u.name+'"></div><div class="fg"><label>Nombre completo</label><input class="fi" id="uf" value="'+u.full+'"></div></div><div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveUnit('+i+')">Guardar</button></div>')}
+function saveUnit(i){D.units[i].name=document.getElementById("un").value;D.units[i].full=document.getElementById("uf").value;save();closeModal();render();toast("Unidad actualizada")}
+
+// ══════ UNIT TASKS MANAGEMENT ══════
+function viewUnitTasks(i){
+  var u=D.units[i];if(!u.taskList)u.taskList=[];
+  var h='<div class="mh"><h2>📋 Tareas de '+u.name+'</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<p style="font-size:12px;color:var(--txl);margin-bottom:14px">'+u.full+'</p>';
+  // Add new task form
+  h+='<div style="background:rgba(64,145,108,.08);border-radius:10px;padding:12px;margin-bottom:14px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input class="fi" type="text" id="ntu" placeholder="Nueva tarea..." style="flex:1 1 200px" onkeydown="if(event.key===\'Enter\')addUnitTask('+i+')"><select class="fi" id="ntp" style="width:auto"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select><button class="bp" onclick="addUnitTask('+i+')">+ Agregar</button></div></div>';
+  // Tasks list
+  if(u.taskList.length===0){h+='<p style="text-align:center;color:var(--txl);padding:20px;font-size:13px">No hay tareas registradas para esta unidad.<br>Agrega la primera tarea arriba.</p>';}
+  else{
+    var pri={alta:0,media:1,baja:2};
+    var sorted=u.taskList.slice().sort(function(a,b){
+      if(a.done!==b.done)return a.done?1:-1;
+      return(pri[a.pri]||1)-(pri[b.pri]||1);
+    });
+    sorted.forEach(function(t){
+      var hasObs=t.obs&&t.obs.trim().length>0;
+      h+='<div style="padding:10px 0;border-bottom:1px solid rgba(212,212,170,.15);'+(t.done?"opacity:.55":"")+'">';
+      h+='<div style="display:flex;align-items:center;gap:12px">';
+      h+='<input type="checkbox" '+(t.done?"checked":"")+' onchange="toggleUnitTask('+i+','+t.id+')">';
+      h+='<span class="pd pd-'+t.pri+'" title="'+t.pri+'"></span>';
+      h+='<div style="flex:1;font-size:13px;'+(t.done?"text-decoration:line-through":"")+'">'+t.title+'</div>';
+      if(hasObs)h+='<span title="Con observaciones" style="font-size:13px;color:var(--info)">💬</span>';
+      h+='<button class="be" onclick="editUnitTask('+i+','+t.id+')" title="Editar">✏️</button>';
+      h+='<button class="bdel" onclick="deleteUnitTask('+i+','+t.id+')" title="Eliminar">🗑</button>';
+      h+='</div>';
+      // Notes textarea inline (collapsed if empty, visible if has notes)
+      h+='<div style="margin-left:30px;margin-top:6px"><textarea data-uti="'+i+'" data-utid="'+t.id+'" onchange="saveUnitTaskObs(this)" placeholder="📝 Agregar observación o nota..." style="width:calc(100% - 10px);min-height:'+(hasObs?'48':'32')+'px;padding:6px 10px;border-radius:6px;border:1px solid rgba(212,212,170,.4);font-size:12px;font-family:inherit;outline:none;resize:vertical;background:'+(hasObs?"rgba(58,134,168,.05)":"rgba(254,250,224,.4)")+';color:var(--tx);transition:all .2s" onfocus="this.style.borderColor=\'var(--pri-s)\';this.style.minHeight=\'48px\'">'+(t.obs||"")+'</textarea></div>';
+      h+='</div>';
+    });
+  }
+  h+='<div class="mf"><button class="bp" onclick="closeModal()">Cerrar</button></div>';
+  openModal(h);
+}
+function addUnitTask(i){
+  var inp=document.getElementById("ntu");var pri=document.getElementById("ntp");
+  if(!inp||!inp.value.trim())return;
+  if(!D.units[i].taskList)D.units[i].taskList=[];
+  D.units[i].taskList.push({id:nid(),title:inp.value.trim(),pri:pri.value,done:false,obs:""});
+  save();viewUnitTasks(i);toast("Tarea agregada");
+}
+function toggleUnitTask(i,tid){
+  D.units[i].taskList=D.units[i].taskList.map(function(t){return t.id===tid?{id:t.id,title:t.title,pri:t.pri,done:!t.done,obs:t.obs||""}:t});
+  save();viewUnitTasks(i);
+}
+function deleteUnitTask(i,tid){
+  if(!confirm("¿Eliminar esta tarea?"))return;
+  D.units[i].taskList=D.units[i].taskList.filter(function(t){return t.id!==tid});
+  save();viewUnitTasks(i);toast("Tarea eliminada");
+}
+function saveUnitTaskObs(el){
+  var ui=parseInt(el.getAttribute("data-uti"));
+  var tid=parseInt(el.getAttribute("data-utid"));
+  D.units[ui].taskList=D.units[ui].taskList.map(function(t){return t.id===tid?{id:t.id,title:t.title,pri:t.pri,done:t.done,obs:el.value}:t});
+  save();toast("Observación guardada");
+}
+function editUnitTask(i,tid){
+  var t=D.units[i].taskList.filter(function(x){return x.id===tid})[0];if(!t)return;
+  var h='<div class="mh"><h2>Editar Tarea</h2><button class="mx" onclick="viewUnitTasks('+i+')">✕</button></div>';
+  h+='<div class="fg"><label>Descripción</label><input class="fi" id="eut" value="'+t.title.replace(/"/g,"&quot;")+'"></div>';
+  h+='<div class="fg"><label>Prioridad</label><select class="fi" id="eup"><option value="alta"'+(t.pri==="alta"?" selected":"")+'>Alta</option><option value="media"'+(t.pri==="media"?" selected":"")+'>Media</option><option value="baja"'+(t.pri==="baja"?" selected":"")+'>Baja</option></select></div>';
+  h+='<div class="fg"><label>Observación / Nota</label><textarea class="fi" id="euo" style="min-height:60px;resize:vertical;font-family:inherit">'+(t.obs||"").replace(/</g,"&lt;")+'</textarea></div>';
+  h+='<div class="mf"><button class="bs" onclick="viewUnitTasks('+i+')">Cancelar</button><button class="bp" onclick="saveUnitTask('+i+','+tid+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveUnitTask(i,tid){
+  D.units[i].taskList=D.units[i].taskList.map(function(t){return t.id===tid?{id:t.id,title:document.getElementById("eut").value,pri:document.getElementById("eup").value,done:t.done,obs:document.getElementById("euo").value}:t});
+  save();viewUnitTasks(i);toast("Tarea actualizada");
+}
+
+// ══════ PRESUPUESTO ══════
+function rPresupuesto(){
+  var el=document.getElementById("sc");var b=D.budget;
+  var h='<div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Resumen Financiero</h3><button class="bs" onclick="openExcelUpload()">📂 Cargar Excel</button><button class="bs" onclick="editBudget()">✏️ Editar manual</button></div>';
+  h+='<div class="g g4 mb24">';
+  b.totals.forEach(function(t){h+='<div class="cd cds"><div style="font-size:12px;color:var(--txl);margin-bottom:4px">'+t.l+'</div><div style="font-size:24px;font-weight:700">'+t.v+'</div><div style="font-size:11px;color:var(--pri-s);margin-top:2px">'+t.s+'</div></div>'});
+  h+='</div><div class="cd mb24"><h3 style="margin:0 0 16px;font-size:15px;font-weight:600">Ingresos Percibidos vs. Gastos Pagados (MM$) — '+(b.lastUpdate||"Balance Feb. 2026")+'</h3><div style="position:relative;height:260px"><canvas id="cB"></canvas></div></div>';
+  // Subtitle distribution if available
+  if(b.subtitulos&&b.subtitulos.length>0){
+    h+='<div class="cd mb24"><h3 style="margin:0 0 16px;font-size:15px;font-weight:600">Distribución por Subtítulo de Gastos</h3>';
+    b.subtitulos.forEach(function(st){
+      var pct=st.vigente>0?(st.pagado/st.vigente*100).toFixed(1):0;
+      h+='<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><strong>'+st.name+'</strong><span style="color:var(--txl)">$'+formatMM(st.vigente)+' MM · '+pct+'% pagado</span></div><div style="height:8px;background:#eee;border-radius:4px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:linear-gradient(90deg,#40916C,#2D6A4F);border-radius:4px"></div></div></div>';
+    });
+    h+='</div>';
+  }
+  if(b.cuentas){h+=renderCuentasMini(b)};h+='<div class="cdt"><h4 style="margin:0 0 8px;font-size:14px;font-weight:600">💡 Recordatorio Clave</h4><p style="margin:0;font-size:13px;color:var(--txl);line-height:1.6">Art. 65 Ley 18.695: modificaciones presupuestarias superiores al 5% requieren acuerdo del Concejo. Usa el botón <strong>"📂 Cargar Excel"</strong> para actualizar automáticamente con los Balances Presupuestarios mensuales de la Dirección de Finanzas.</p></div>';
+  el.innerHTML=h;
+  var ctx=document.getElementById("cB");if(ctx)charts.push(new Chart(ctx,{type:"bar",data:{labels:b.months,datasets:[{label:"Ingresos",data:b.ingresos,backgroundColor:"#40916C",borderRadius:6},{label:"Gastos",data:b.gastos,backgroundColor:"rgba(188,71,73,.75)",borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:16,font:{family:"DM Sans",size:12}}}},scales:{x:{grid:{display:false},ticks:{font:{family:"DM Sans",size:12},color:"#52796F"}},y:{grid:{color:"#f0f0e0"},ticks:{font:{family:"DM Sans",size:12},color:"#52796F"}}}}}));
+}
+function formatMM(n){return(n/1000000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,".")}
+function formatCLP(n){return"$"+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,".")}
+
+// ══════ EXCEL UPLOAD ══════
+function openExcelUpload(){
+  var h='<div class="mh"><h2>📂 Cargar Balance Presupuestario</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<p style="font-size:13px;color:var(--txl);margin-bottom:14px;line-height:1.6">Sube los archivos Excel de <strong>Ingresos</strong> y/o <strong>Gastos</strong> generados por la Dirección de Finanzas. El sistema detectará automáticamente el tipo de archivo y extraerá los totales del Balance Presupuestario.</p>';
+  h+='<div class="fg"><label>Archivo de Ingresos (.xls / .xlsx)</label><input class="fi" type="file" id="xlsIngresos" accept=".xls,.xlsx"></div>';
+  h+='<div class="fg"><label>Archivo de Gastos (.xls / .xlsx)</label><input class="fi" type="file" id="xlsGastos" accept=".xls,.xlsx"></div>';
+  h+='<div id="xlsPreview" style="margin-top:14px"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="processExcelFiles()">Procesar y Cargar</button></div>';
+  openModal(h);
+}
+
+function processExcelFiles(){
+  var fIng=document.getElementById("xlsIngresos").files[0];
+  var fGas=document.getElementById("xlsGastos").files[0];
+  if(!fIng&&!fGas){alert("Selecciona al menos un archivo");return}
+  var preview=document.getElementById("xlsPreview");
+  preview.innerHTML='<p style="text-align:center;color:var(--txl);font-size:13px">⏳ Procesando archivo(s)...</p>';
+  var results={ingresos:null,gastos:null};
+  var pending=0;
+  if(fIng){pending++;parseExcelFile(fIng,"ingresos",function(r){results.ingresos=r;pending--;if(pending===0)applyResults(results)})}
+  if(fGas){pending++;parseExcelFile(fGas,"gastos",function(r){results.gastos=r;pending--;if(pending===0)applyResults(results)})}
+}
+
+function parseExcelFile(file,type,cb){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=new Uint8Array(e.target.result);
+      var wb=XLSX.read(data,{type:"array"});
+      var sheet=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+      // Try to detect month from header
+      var month="",year="";
+      for(var i=0;i<Math.min(15,rows.length);i++){
+        var line=rows[i].join(" ").toUpperCase();
+        var mm=line.match(/AL MES DE (\w+) DE (\d{4})/);
+        if(mm){month=mm[1];year=mm[2];break}
+      }
+      // Find code prefix: 115 for ingresos, 215 for gastos
+      var prefix=type==="ingresos"?"115":"215";
+      var totalRow=null;var subtitles=[];
+      for(var j=0;j<rows.length;j++){
+        var row=rows[j];if(!row||row.length<3)continue;
+        var code=String(row[0]||"").trim();
+        if(code===prefix+"-00-00-000-000-000"){totalRow=row}
+        // Subtítulo level (e.g. 215-21-00-000-000-000)
+        else if(code.match(new RegExp("^"+prefix+"-\\d{2}-00-000-000-000$"))){
+          subtitles.push({code:code,name:String(row[1]||"").trim(),row:row});
+        }
+      }
+      if(!totalRow){cb({error:"No se encontró el total ("+prefix+"-00-00-000-000-000) en el archivo"});return}
+      // Extract values - column positions for ingresos: vigente=3, devengado_acum=8, percibido_acum=10
+      // For gastos: vigente=3, obligado_acum=6, devengado_acum=8, pagado_acum=11
+      var result={type:type,month:month,year:year,vigente:parseFloat(totalRow[3])||0};
+      if(type==="ingresos"){
+        result.devengado=parseFloat(totalRow[8])||0;
+        result.percibido=parseFloat(totalRow[10])||0;
+      }else{
+        result.obligado=parseFloat(totalRow[6])||0;
+        result.devengado=parseFloat(totalRow[9])||0;
+        result.pagado=parseFloat(totalRow[11])||0;
+        // Extract subtitulo distribution for expenses
+        result.subtitulos=subtitles.map(function(s){
+          return{code:s.code,name:s.name,vigente:parseFloat(s.row[3])||0,pagado:parseFloat(s.row[11])||0};
+        }).filter(function(s){return s.vigente>0});
+      }
+      cb(result);
+    }catch(err){cb({error:"Error al leer archivo: "+err.message})}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function applyResults(results){
+  var preview=document.getElementById("xlsPreview");
+  var h='<div style="background:rgba(64,145,108,.08);border:1px solid rgba(64,145,108,.2);border-radius:10px;padding:14px;font-size:13px">';
+  var hasError=false;
+  if(results.ingresos){
+    if(results.ingresos.error){h+='<p style="color:var(--err)">❌ Ingresos: '+results.ingresos.error+'</p>';hasError=true}
+    else{
+      h+='<p style="margin-bottom:6px"><strong style="color:#40916C">✅ Ingresos detectados</strong>'+(results.ingresos.month?" ("+results.ingresos.month+" "+results.ingresos.year+")":"")+'</p>';
+      h+='<div style="font-size:12px;color:var(--txl);margin-bottom:8px">• Vigente: '+formatCLP(results.ingresos.vigente)+'<br>• Devengado: '+formatCLP(results.ingresos.devengado)+'<br>• Percibido: '+formatCLP(results.ingresos.percibido)+'</div>';
+    }
+  }
+  if(results.gastos){
+    if(results.gastos.error){h+='<p style="color:var(--err)">❌ Gastos: '+results.gastos.error+'</p>';hasError=true}
+    else{
+      h+='<p style="margin-bottom:6px"><strong style="color:#BC4749">✅ Gastos detectados</strong>'+(results.gastos.month?" ("+results.gastos.month+" "+results.gastos.year+")":"")+'</p>';
+      h+='<div style="font-size:12px;color:var(--txl);margin-bottom:8px">• Vigente: '+formatCLP(results.gastos.vigente)+'<br>• Obligado: '+formatCLP(results.gastos.obligado)+'<br>• Devengado: '+formatCLP(results.gastos.devengado)+'<br>• Pagado: '+formatCLP(results.gastos.pagado)+'<br>• Subtítulos detectados: '+(results.gastos.subtitulos?results.gastos.subtitulos.length:0)+'</div>';
+    }
+  }
+  h+='</div>';
+  preview.innerHTML=h;
+  if(hasError)return;
+  // Apply to D.budget
+  var b=D.budget;
+  var monthName=(results.ingresos&&results.ingresos.month)||(results.gastos&&results.gastos.month)||"";
+  var year=(results.ingresos&&results.ingresos.year)||(results.gastos&&results.gastos.year)||"";
+  if(results.ingresos){
+    var vMM=Math.round(results.ingresos.vigente/1000000);
+    b.totals[0]={l:"Presupuesto Vigente",v:"$"+formatMM(results.ingresos.vigente)+" MM",s:"Total ingresos "+year};
+    b.totals[2]={l:"Percibido Acum.",v:"$"+formatMM(results.ingresos.percibido)+" MM",s:"Ingresos efectivos"};
+    var pctIng=results.ingresos.vigente>0?(results.ingresos.percibido/results.ingresos.vigente*100).toFixed(1):0;
+    // update KPIs
+    if(D.kpis&&D.kpis[1]){D.kpis[1].value="$"+formatMM(results.ingresos.percibido)+" MM";D.kpis[1].trend=pctIng+"% del vigente"}
+  }
+  if(results.gastos){
+    b.totals[1]={l:"Devengado Acum.",v:"$"+formatMM(results.gastos.devengado)+" MM",s:((results.gastos.devengado/results.gastos.vigente*100).toFixed(1))+"% ejecutado"};
+    b.totals[3]={l:"Pagado Acum.",v:"$"+formatMM(results.gastos.pagado)+" MM",s:"Gastos efectivos"};
+    if(results.gastos.subtitulos&&results.gastos.subtitulos.length>0){
+      b.subtitulos=results.gastos.subtitulos.map(function(s){return{name:s.name.replace("C X P ",""),vigente:s.vigente,pagado:s.pagado}});
+    }
+    var pctGas=results.gastos.vigente>0?(results.gastos.pagado/results.gastos.vigente*100).toFixed(1):0;
+    if(D.kpis&&D.kpis[0]){D.kpis[0].value=((results.gastos.devengado/results.gastos.vigente*100).toFixed(1))+"%";D.kpis[0].trend=monthName+" "+year}
+    if(D.kpis&&D.kpis[2]){D.kpis[2].value="$"+formatMM(results.gastos.pagado)+" MM";D.kpis[2].trend=pctGas+"% del vigente"}
+  }
+  // Update monthly chart - add new data point or replace existing month
+  var monthMap={ENERO:"Ene",FEBRERO:"Feb",MARZO:"Mar",ABRIL:"Abr",MAYO:"May",JUNIO:"Jun",JULIO:"Jul",AGOSTO:"Ago",SEPTIEMBRE:"Sep",OCTUBRE:"Oct",NOVIEMBRE:"Nov",DICIEMBRE:"Dic"};
+  var mShort=monthMap[monthName]||monthName.substring(0,3);
+  if(mShort){
+    var idx=b.months.indexOf(mShort);
+    var ingMM=results.ingresos?Math.round(results.ingresos.percibido/1000000):0;
+    var gasMM=results.gastos?Math.round(results.gastos.pagado/1000000):0;
+    if(idx>=0){
+      if(ingMM>0)b.ingresos[idx]=ingMM;
+      if(gasMM>0)b.gastos[idx]=gasMM;
+    }else{
+      b.months.push(mShort);
+      b.ingresos.push(ingMM);
+      b.gastos.push(gasMM);
+    }
+  }
+  b.lastUpdate="Balance "+monthName+" "+year;
+  save();
+  setTimeout(function(){closeModal();render();toast("✅ Datos actualizados desde Excel")},1200);
+}
+
+function editBudget(){
+  var b=D.budget;
+  var h='<div class="mh"><h2>Editar Presupuesto</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<p style="font-size:13px;color:var(--txl);margin-bottom:14px">Cifras resumen:</p>';
+  b.totals.forEach(function(t,i){h+='<div class="fr"><div class="fg"><label>'+t.l+'</label><input class="fi" id="bv'+i+'" value="'+t.v+'"></div><div class="fg"><label>Detalle</label><input class="fi" id="bs'+i+'" value="'+t.s+'"></div></div>'});
+  h+='<p style="font-size:13px;color:var(--txl);margin:14px 0 8px">Datos mensuales (MM$) — separados por coma:</p>';
+  h+='<div class="fg"><label>Meses</label><input class="fi" id="bm" value="'+b.months.join(",")+'"></div>';
+  h+='<div class="fg"><label>Ingresos</label><input class="fi" id="bi" value="'+b.ingresos.join(",")+'"></div>';
+  h+='<div class="fg"><label>Gastos</label><input class="fi" id="bg" value="'+b.gastos.join(",")+'"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveBudget()">Guardar</button></div>';
+  openModal(h);
+}
+function saveBudget(){
+  var b=D.budget;
+  b.totals.forEach(function(t,i){t.v=document.getElementById("bv"+i).value;t.s=document.getElementById("bs"+i).value});
+  b.months=document.getElementById("bm").value.split(",").map(function(s){return s.trim()});
+  b.ingresos=document.getElementById("bi").value.split(",").map(function(s){return parseFloat(s.trim())||0});
+  b.gastos=document.getElementById("bg").value.split(",").map(function(s){return parseFloat(s.trim())||0});
+  save();closeModal();render();toast("Presupuesto actualizado");
+}
+
+// ══════ INFORMES TRIMESTRALES (Control Interno) ══════
+var trimFilter={year:"todos",trim:"todos",search:""};
+function rTrimestrales(){
+  if(!D.trimestrales)D.trimestrales=[];
+      if(!D.macroprocesos)D.macroprocesos=JSON.parse(JSON.stringify(DEF.macroprocesos));
+      if(!D.procesosRelevantes)D.procesosRelevantes=JSON.parse(JSON.stringify(DEF.procesosRelevantes));
+      if(!D.bitacora)D.bitacora=[];
+      // Force refresh mercado if old 2025 licitaciones detected
+      if(D.mercado&&D.mercado.some(function(m){return(m.oc||"").indexOf("25")>=0&&(m.oc||"").indexOf("2025")<0&&/-L[PEQ]25$/.test(m.oc||"")})){
+        D.mercado=JSON.parse(JSON.stringify(DEF.mercado));
+      }
+      if(D.budget&&!D.budget.cuentas)D.budget.cuentas=DEF.budget.cuentas;
+  var el=document.getElementById("sc");
+  // Stats
+  var total=D.trimestrales.length;
+  var years={};
+  D.trimestrales.forEach(function(t){years[t.year]=(years[t.year]||0)+1});
+  var thisYear=new Date().getFullYear();
+  var current=D.trimestrales.filter(function(t){return parseInt(t.year)===thisYear}).length;
+  var h='';
+  // Info banner
+  h+='<div style="background:rgba(58,134,168,.1);border:1px solid rgba(58,134,168,.25);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--txl);line-height:1.6"><strong style="color:#3A86A8">📊 Informes Trimestrales — Dirección de Control Interno:</strong> Carga aquí los informes trimestrales que entrega la Dirección de Control Interno conforme al Art. 29 letra d) de la Ley 18.695 (semestral al Concejo). Puedes subir cualquier archivo Excel (.xls / .xlsx) y el sistema extraerá su contenido para visualización y búsqueda.</div>';
+  // Stats grid
+  h+='<div class="g g4 mb24">';
+  [{l:"Total Informes",v:total,c:"#3A86A8"},{l:"Año "+thisYear,v:current,c:"#40916C"},{l:"Años Cubiertos",v:Object.keys(years).length,c:"#D4A373"},{l:"Último Cargado",v:total>0?(D.trimestrales[D.trimestrales.length-1].trimestre+"° "+D.trimestrales[D.trimestrales.length-1].year):"—",c:"#9D4EDD"}].forEach(function(s){
+    h+='<div class="cd cds" style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:10px;background:'+s.c+'18;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+s.c+'" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="9" x2="9" y1="3" y2="21"/><line x1="3" x2="21" y1="9" y2="9"/></svg></div><div><div style="font-size:'+(typeof s.v==="string"?"16":"22")+'px;font-weight:700">'+s.v+'</div><div style="font-size:11px;color:var(--txl)">'+s.l+'</div></div></div>';
+  });
+  h+='</div>';
+  // Upload + filter bar
+  h+='<div class="cd mb24"><div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Informes Cargados</h3><button class="bp" onclick="openTrimestralUpload()">📂 Cargar Informe</button></div>';
+  // Filters
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:rgba(254,250,224,.5);border-radius:10px;align-items:center">';
+  h+='<span style="font-size:12px;font-weight:600;color:var(--txl)">🔍 Filtrar:</span>';
+  h+='<select class="fi" id="trYear" onchange="trimFilter.year=this.value;rTrimestrales()" style="width:auto;padding:6px 10px"><option value="todos"'+(trimFilter.year==="todos"?" selected":"")+'>Todos los años</option>';
+  Object.keys(years).sort().reverse().forEach(function(y){h+='<option value="'+y+'"'+(trimFilter.year===y?" selected":"")+'>'+y+'</option>'});
+  h+='</select>';
+  h+='<select class="fi" id="trTrim" onchange="trimFilter.trim=this.value;rTrimestrales()" style="width:auto;padding:6px 10px"><option value="todos"'+(trimFilter.trim==="todos"?" selected":"")+'>Todos los trimestres</option>';
+  ["1","2","3","4"].forEach(function(t){h+='<option value="'+t+'"'+(trimFilter.trim===t?" selected":"")+'>'+t+'° Trimestre</option>'});
+  h+='</select>';
+  h+='<input class="fi" type="text" id="trSearch" placeholder="Buscar en contenido..." value="'+trimFilter.search.replace(/"/g,"&quot;")+'" oninput="trimFilter.search=this.value;rTrimestrales()" style="flex:1;min-width:180px;padding:6px 12px">';
+  if(trimFilter.year!=="todos"||trimFilter.trim!=="todos"||trimFilter.search){
+    h+='<button class="bs" onclick="trimFilter={year:\'todos\',trim:\'todos\',search:\'\'};rTrimestrales()">Limpiar</button>';
+  }
+  h+='</div>';
+  // Filtered list
+  var filtered=D.trimestrales.filter(function(t){
+    if(trimFilter.year!=="todos"&&String(t.year)!==trimFilter.year)return false;
+    if(trimFilter.trim!=="todos"&&String(t.trimestre)!==trimFilter.trim)return false;
+    if(trimFilter.search){
+      var q=trimFilter.search.toLowerCase();
+      var inName=(t.nombre||"").toLowerCase().indexOf(q)>=0;
+      var inObs=(t.obs||"").toLowerCase().indexOf(q)>=0;
+      var inContent=false;
+      if(t.contenido)t.contenido.forEach(function(row){if(row.join(" ").toLowerCase().indexOf(q)>=0)inContent=true});
+      if(!inName&&!inObs&&!inContent)return false;
+    }
+    return true;
+  });
+  if(filtered.length===0){
+    if(D.trimestrales.length===0){
+      h+='<div style="text-align:center;padding:40px 20px;color:var(--txl)"><div style="font-size:48px;margin-bottom:10px">📊</div><p style="font-size:14px;margin-bottom:6px">Aún no hay informes trimestrales cargados.</p><p style="font-size:12px">Usa el botón <strong>"📂 Cargar Informe"</strong> para subir el primero.</p></div>';
+    }else{
+      h+='<div style="text-align:center;padding:30px 20px;color:var(--txl);font-size:13px">No hay informes que coincidan con los filtros aplicados.</div>';
+    }
+  }else{
+    // Sort: most recent first
+    filtered.sort(function(a,b){
+      if(a.year!==b.year)return parseInt(b.year)-parseInt(a.year);
+      return parseInt(b.trimestre)-parseInt(a.trimestre);
+    });
+    filtered.forEach(function(t){
+      var rowCount=t.contenido?t.contenido.length:0;
+      var idx=D.trimestrales.indexOf(t);
+      h+='<div style="display:flex;gap:14px;padding:14px;border:1px solid rgba(212,212,170,.3);border-radius:10px;margin-bottom:10px;align-items:center">';
+      h+='<div style="background:linear-gradient(135deg,#3A86A8,#1B4D6B);color:#fff;padding:10px 14px;border-radius:10px;text-align:center;min-width:80px"><div style="font-size:18px;font-weight:700">T'+t.trimestre+'</div><div style="font-size:11px;font-weight:500">'+t.year+'</div></div>';
+      h+='<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;margin-bottom:3px">'+t.nombre+'</div>';
+      h+='<div style="font-size:11px;color:var(--txl)">📁 '+t.archivo+' · 📊 '+rowCount+' filas · 📅 Cargado: '+(t.fechaCarga||"")+'</div>';
+      if(t.obs)h+='<div style="font-size:11px;color:var(--txl);font-style:italic;margin-top:3px">💬 '+t.obs+'</div>';
+      h+='</div>';
+      h+='<button class="bs" onclick="viewTrimestral('+idx+')">👁 Ver</button>';
+      h+='<button class="be" onclick="editTrimestralMeta('+idx+')" title="Editar">✏️</button>';
+      h+='<button class="bdel" onclick="deleteTrimestral('+idx+')" title="Eliminar">🗑</button>';
+      h+='</div>';
+    });
+  }
+  h+='</div>';
+  // Legal reference
+  h+='<div class="cdl"><h4 style="margin:0 0 8px;font-size:14px;font-weight:600">⚖️ Marco Legal — Dirección de Control</h4><div style="font-size:13px;color:var(--txl);line-height:1.8"><strong>Art. 29 Ley 18.695:</strong> A la unidad encargada del control le corresponde realizar la auditoría operativa interna del municipio, controlar la ejecución financiera y presupuestaria, representar al alcalde los actos contrarios a derecho, colaborar con el Concejo en el ejercicio de sus funciones fiscalizadoras, y <strong>remitir trimestralmente</strong> al Concejo un informe sobre el estado de avance del ejercicio presupuestario.<br><strong>Art. 81:</strong> El Concejo deberá pronunciarse sobre las observaciones que le formule el jefe de la unidad de control.</div></div>';
+  el.innerHTML=h;
+}
+
+function openTrimestralUpload(){
+  var thisYear=new Date().getFullYear();
+  var h='<div class="mh"><h2>📂 Cargar Informe Trimestral</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<p style="font-size:13px;color:var(--txl);margin-bottom:14px;line-height:1.6">Sube un archivo Excel (.xls / .xlsx) con el informe trimestral de Control Interno. El sistema extraerá automáticamente su contenido.</p>';
+  h+='<div class="fr"><div class="fg"><label>Año</label><select class="fi" id="trUploadYear">';
+  for(var y=thisYear+1;y>=thisYear-5;y--){h+='<option value="'+y+'"'+(y===thisYear?" selected":"")+'>'+y+'</option>'}
+  h+='</select></div><div class="fg"><label>Trimestre</label><select class="fi" id="trUploadTrim"><option value="1">1° Trimestre (Ene-Mar)</option><option value="2">2° Trimestre (Abr-Jun)</option><option value="3">3° Trimestre (Jul-Sep)</option><option value="4">4° Trimestre (Oct-Dic)</option></select></div></div>';
+  h+='<div class="fg"><label>Nombre del Informe</label><input class="fi" id="trUploadName" placeholder="Ej: Informe Trimestral Ejecución Presupuestaria"></div>';
+  h+='<div class="fg"><label>Archivo Excel</label><input class="fi" type="file" id="trUploadFile" accept=".xls,.xlsx"></div>';
+  h+='<div class="fg"><label>Observaciones (opcional)</label><input class="fi" id="trUploadObs" placeholder="Notas sobre este informe..."></div>';
+  h+='<div id="trUploadPreview" style="margin-top:14px"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="processTrimestralFile()">Cargar</button></div>';
+  openModal(h);
+}
+
+function processTrimestralFile(){
+  var file=document.getElementById("trUploadFile").files[0];
+  var year=document.getElementById("trUploadYear").value;
+  var trim=document.getElementById("trUploadTrim").value;
+  var name=document.getElementById("trUploadName").value.trim()||("Informe T"+trim+" "+year);
+  var obs=document.getElementById("trUploadObs").value;
+  if(!file){alert("Selecciona un archivo");return}
+  var preview=document.getElementById("trUploadPreview");
+  preview.innerHTML='<p style="text-align:center;color:var(--txl);font-size:13px">⏳ Procesando...</p>';
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=new Uint8Array(e.target.result);
+      var wb=XLSX.read(data,{type:"array"});
+      // Extract all sheets
+      var allRows=[];
+      var sheetNames=wb.SheetNames;
+      sheetNames.forEach(function(sn){
+        var sheet=wb.Sheets[sn];
+        var rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+        if(rows.length>0&&sheetNames.length>1){
+          allRows.push(["═══ HOJA: "+sn+" ═══"]);
+        }
+        rows.forEach(function(r){
+          // Trim trailing empty cells, keep rows with at least one value
+          var cleaned=r.map(function(c){return String(c||"").trim()});
+          while(cleaned.length>0&&cleaned[cleaned.length-1]==="")cleaned.pop();
+          if(cleaned.length>0)allRows.push(cleaned);
+        });
+      });
+      var entry={
+        id:nid(),
+        year:year,
+        trimestre:trim,
+        nombre:name,
+        archivo:file.name,
+        fechaCarga:new Date().toLocaleDateString("es-CL"),
+        obs:obs,
+        contenido:allRows,
+        sheets:sheetNames
+      };
+      D.trimestrales.push(entry);
+      save();
+      preview.innerHTML='<div style="background:rgba(64,145,108,.1);border:1px solid rgba(64,145,108,.25);border-radius:10px;padding:12px;font-size:13px;color:#1B4332"><strong>✅ Cargado correctamente</strong><br>📊 '+allRows.length+' filas extraídas de '+sheetNames.length+' hoja(s)</div>';
+      setTimeout(function(){closeModal();render();toast("✅ Informe cargado")},1200);
+    }catch(err){
+      preview.innerHTML='<div style="background:rgba(188,71,73,.1);border:1px solid rgba(188,71,73,.25);border-radius:10px;padding:12px;font-size:13px;color:#BC4749">❌ Error al leer archivo: '+err.message+'</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+var trimViewSearch="";
+function viewTrimestral(idx){
+  var t=D.trimestrales[idx];if(!t)return;
+  var h='<div class="mh"><h2>📊 '+t.nombre+'</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:11px"><span style="background:#3A86A818;color:#3A86A8;padding:4px 10px;border-radius:10px;font-weight:600">'+t.trimestre+'° Trimestre '+t.year+'</span><span style="background:rgba(82,121,111,.15);color:var(--txl);padding:4px 10px;border-radius:10px">📁 '+t.archivo+'</span><span style="background:rgba(82,121,111,.15);color:var(--txl);padding:4px 10px;border-radius:10px">📊 '+(t.contenido?t.contenido.length:0)+' filas</span></div>';
+  if(t.obs)h+='<div style="background:rgba(254,250,224,.7);border-left:3px solid var(--acc);padding:10px 14px;border-radius:6px;font-size:12px;color:var(--txl);margin-bottom:14px;font-style:italic">💬 '+t.obs+'</div>';
+  // Search within content
+  h+='<div style="margin-bottom:12px"><input class="fi" type="text" id="trViewSearch" placeholder="🔍 Buscar dentro del informe..." value="'+trimViewSearch.replace(/"/g,"&quot;")+'" oninput="trimViewSearch=this.value;refreshTrimView('+idx+')"></div>';
+  h+=rTrimDashboard(t);h+='<div id="trContentBox" style="max-height:400px;overflow:auto;border:1px solid rgba(212,212,170,.3);border-radius:8px;background:#fafaf4">';
+  h+=renderTrimContent(t,trimViewSearch);
+  h+='</div>';
+  h+='<div class="mf"><button class="bp" onclick="closeModal();trimViewSearch=\'\'">Cerrar</button></div>';
+  openModal(h);
+}
+
+function refreshTrimView(idx){
+  var t=D.trimestrales[idx];if(!t)return;
+  var box=document.getElementById("trContentBox");
+  if(box)box.innerHTML=renderTrimContent(t,trimViewSearch);
+}
+
+function renderTrimContent(t,search){
+  if(!t.contenido||t.contenido.length===0)return '<p style="padding:20px;text-align:center;color:var(--txl);font-size:13px">Sin contenido extraído</p>';
+  var q=(search||"").toLowerCase();
+  var visible=t.contenido;
+  var matchCount=0;
+  if(q){
+    visible=t.contenido.filter(function(row){
+      var match=row.join(" ").toLowerCase().indexOf(q)>=0;
+      if(match)matchCount++;
+      return match;
+    });
+  }
+  var h='';
+  if(q){h+='<div style="padding:8px 12px;background:rgba(58,134,168,.08);font-size:11px;color:var(--txl);border-bottom:1px solid rgba(212,212,170,.3)">🔍 '+matchCount+' filas coinciden con "'+q+'"</div>';}
+  if(visible.length===0){h+='<p style="padding:20px;text-align:center;color:var(--txl);font-size:13px">Sin resultados</p>';return h}
+  // Determine max columns
+  var maxCols=0;
+  visible.forEach(function(r){if(r.length>maxCols)maxCols=r.length});
+  if(maxCols>10)maxCols=10;
+  h+='<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  visible.slice(0,500).forEach(function(row,ri){
+    var isHeader=row[0]&&String(row[0]).indexOf("═══")>=0;
+    if(isHeader){
+      h+='<tr><td colspan="'+maxCols+'" style="padding:8px 12px;background:#1B4332;color:#fff;font-weight:700;font-size:12px">'+row[0]+'</td></tr>';
+      return;
+    }
+    h+='<tr style="background:'+(ri%2===0?"#fff":"rgba(212,212,170,.08)")+'">';
+    for(var c=0;c<maxCols;c++){
+      var cell=String(row[c]||"");
+      if(q&&cell.toLowerCase().indexOf(q)>=0){
+        var re=new RegExp("("+q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","gi");
+        cell=cell.replace(re,'<mark style="background:#FFE066;padding:0 2px;border-radius:2px">$1</mark>');
+      }
+      h+='<td style="padding:5px 10px;border-bottom:1px solid rgba(212,212,170,.2);vertical-align:top">'+cell+'</td>';
+    }
+    h+='</tr>';
+  });
+  h+='</table>';
+  if(visible.length>500)h+='<div style="padding:10px;text-align:center;color:var(--txl);font-size:11px;background:rgba(212,212,170,.1)">Mostrando primeras 500 filas de '+visible.length+'</div>';
+  return h;
+}
+
+function editTrimestralMeta(idx){
+  var t=D.trimestrales[idx];if(!t)return;
+  var h='<div class="mh"><h2>Editar Informe</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fr"><div class="fg"><label>Año</label><input class="fi" type="number" id="trEdY" value="'+t.year+'"></div><div class="fg"><label>Trimestre</label><select class="fi" id="trEdT"><option value="1"'+(t.trimestre==="1"?" selected":"")+'>1°</option><option value="2"'+(t.trimestre==="2"?" selected":"")+'>2°</option><option value="3"'+(t.trimestre==="3"?" selected":"")+'>3°</option><option value="4"'+(t.trimestre==="4"?" selected":"")+'>4°</option></select></div></div>';
+  h+='<div class="fg"><label>Nombre</label><input class="fi" id="trEdN" value="'+t.nombre.replace(/"/g,"&quot;")+'"></div>';
+  h+='<div class="fg"><label>Observaciones</label><input class="fi" id="trEdO" value="'+(t.obs||"").replace(/"/g,"&quot;")+'"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveTrimestralMeta('+idx+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveTrimestralMeta(idx){
+  D.trimestrales[idx].year=document.getElementById("trEdY").value;
+  D.trimestrales[idx].trimestre=document.getElementById("trEdT").value;
+  D.trimestrales[idx].nombre=document.getElementById("trEdN").value;
+  D.trimestrales[idx].obs=document.getElementById("trEdO").value;
+  save();closeModal();render();toast("Informe actualizado");
+}
+function deleteTrimestral(idx){
+  if(!confirm("¿Eliminar este informe trimestral? Esta acción no se puede deshacer."))return;
+  D.trimestrales.splice(idx,1);save();render();toast("Informe eliminado");
+}
+
+// ══════ PROYECTOS ══════
+function rProyectos(){
+  var el=document.getElementById("sc");
+  var h='<div class="cd tw"><div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Cartera de Proyectos</h3><button class="bs" onclick="openProjExcel()">📂 Cargar Excel</button><button class="bp" onclick="editProj(-1)">+ Nuevo</button></div>';
+  h+='<table><thead><tr><th>Proyecto</th><th>Unidad</th><th>Presupuesto</th><th>Financiamiento</th><th>Urgencia</th><th>Avance</th><th>Estado</th><th></th></tr></thead><tbody>';
+  D.projects.forEach(function(p,i){h+='<tr class="'+(i%2===0?"ra":"rn")+'"><td style="font-weight:600">'+p.name+'</td><td style="color:var(--txl)">'+p.unit+'</td><td style="font-weight:600">'+p.budget+'</td><td style="font-size:12px">'+(p.financiamiento||"-")+'</td><td>'+(p.urgencia?dot(p.urgencia)+p.urgencia:"-")+'</td><td><div style="display:flex;align-items:center;gap:8px"><div class="pt"><div class="pf" style="width:'+p.progress+'%;background:'+pc(p.progress)+'"></div></div><span style="font-size:12px;font-weight:600;min-width:32px">'+p.progress+'%</span></div></td><td>'+bd(p.status)+'</td><td style="white-space:nowrap"><button class="be" onclick="editProj('+i+')" title="Editar">✏️</button><button class="bdel" onclick="delProj('+i+')" title="Eliminar">🗑</button></td></tr>'});
+  h+='</tbody></table></div>';el.innerHTML=h;
+}
+function editProj(i){
+  var p=i>=0?D.projects[i]:{id:nid(),name:"",progress:0,budget:"",unit:"",status:"pendiente"};var isNew=i<0;
+  var h='<div class="mh"><h2>'+(isNew?"Nuevo":"Editar")+' Proyecto</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Nombre</label><input class="fi" id="pn" value="'+p.name+'"></div>';
+  h+='<div class="fr"><div class="fg"><label>Unidad</label><input class="fi" id="pu" value="'+p.unit+'"></div><div class="fg"><label>Presupuesto</label><input class="fi" id="pb" value="'+p.budget+'"></div></div><div class="fr"><div class="fg"><label>Línea Financiamiento</label><select class="fi" id="pf"><option value=""'+(!p.financiamiento?" selected":"")+'>—</option><option value="Municipal"'+(p.financiamiento==="Municipal"?" selected":"")+'>Municipal</option><option value="FNDR"'+(p.financiamiento==="FNDR"?" selected":"")+'>FNDR</option><option value="SUBDERE"'+(p.financiamiento==="SUBDERE"?" selected":"")+'>SUBDERE</option><option value="PMU"'+(p.financiamiento==="PMU"?" selected":"")+'>PMU</option><option value="Sectorial"'+(p.financiamiento==="Sectorial"?" selected":"")+'>Sectorial</option></select></div><div class="fg"><label>Urgencia</label><select class="fi" id="pug"><option value="alta"'+(p.urgencia==="alta"?" selected":"")+'>Alta</option><option value="media"'+(p.urgencia==="media"?" selected":"")+'>Media</option><option value="baja"'+(p.urgencia==="baja"?" selected":"")+'>Baja</option></select></div></div>';
+  h+='<div class="fr"><div class="fg"><label>Avance %</label><input class="fi" type="number" min="0" max="100" id="pp" value="'+p.progress+'"></div><div class="fg"><label>Estado</label><select class="fi" id="ps"><option value="pendiente"'+(p.status==="pendiente"?" selected":"")+'>Pendiente</option><option value="diseno"'+(p.status==="diseno"?" selected":"")+'>Diseño</option><option value="licitacion"'+(p.status==="licitacion"?" selected":"")+'>Licitación</option><option value="ejecucion"'+(p.status==="ejecucion"?" selected":"")+'>Ejecución</option><option value="completado"'+(p.status==="completado"?" selected":"")+'>Completado</option></select></div></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveProj('+i+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveProj(i){var o={id:i>=0?D.projects[i].id:nid(),name:document.getElementById("pn").value,unit:document.getElementById("pu").value,budget:document.getElementById("pb").value,progress:parseInt(document.getElementById("pp").value)||0,status:document.getElementById("ps").value,financiamiento:document.getElementById("pf").value,urgencia:document.getElementById("pug").value};if(i>=0)D.projects[i]=o;else D.projects.push(o);save();closeModal();render();toast(i>=0?"Proyecto actualizado":"Proyecto creado")}
+function delProj(i){if(confirm("¿Eliminar proyecto?")){D.projects.splice(i,1);save();render();toast("Proyecto eliminado")}}
+
+// ══════ COMPLIANCE ══════
+function rCompliance(){
+  var pn=D.compliance.filter(function(c){return c.status==="pendiente"}).length;
+  var ip=D.compliance.filter(function(c){return c.status==="en_progreso"}).length;
+  var dn=D.compliance.filter(function(c){return c.status==="completado"}).length;
+  var el=document.getElementById("sc");
+  var stats=[{l:"Pendientes",v:pn,c:"#DDA15E"},{l:"En Progreso",v:ip,c:"#3A86A8"},{l:"Completados",v:dn,c:"#40916C"}];
+  var h='<div class="g g3 mb24">';
+  stats.forEach(function(s){h+='<div class="cd cds" style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:10px;background:'+s.c+'18;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+s.c+'" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div style="font-size:22px;font-weight:700">'+s.v+'</div><div style="font-size:11px;color:var(--txl)">'+s.l+'</div></div></div>'});
+  h+='</div><div class="cd mb24"><div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Obligaciones y Plazos</h3><button class="bp" onclick="editComp(-1)">+ Nueva Obligación</button></div>';
+  D.compliance.forEach(function(c,i){h+='<div class="cr">'+dot(c.priority)+'<div class="ci"><div class="ctt">'+c.title+'</div><div class="cs">'+c.entity+' — Vence: '+fd(c.deadline)+'</div></div>'+bd(c.status)+'<button class="be" onclick="editComp('+i+')" title="Editar">✏️</button><button class="bdel" onclick="delComp('+i+')" title="Eliminar">🗑</button></div>'});
+  h+='</div><div class="cdl"><h4 style="margin:0 0 8px;font-size:14px;font-weight:600">⚖️ Marco Normativo</h4><div style="font-size:13px;color:var(--txl);line-height:1.7"><strong>Contraloría:</strong> Ley 10.336<br><strong>Probidad:</strong> Ley 20.880<br><strong>Transparencia:</strong> Ley 20.285<br><strong>Compras:</strong> Ley 19.886 mod. Ley 21.634 + DS 661/2024 (Nuevo Reglamento, 202 arts.)<br><strong>Novedades DS 661:</strong> Programa de Integridad, Canal Denuncia Reservada, Economía Circular, Subasta Inversa, Registro obligatorio proveedores</div></div>';
+  el.innerHTML=h;
+}
+function editComp(i){
+  var c=i>=0?D.compliance[i]:{id:nid(),title:"",entity:"",deadline:new Date().toISOString().slice(0,10),status:"pendiente",priority:"media"};var isN=i<0;
+  var h='<div class="mh"><h2>'+(isN?"Nueva":"Editar")+' Obligación</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Título</label><input class="fi" id="ct" value="'+c.title+'"></div>';
+  h+='<div class="fr"><div class="fg"><label>Entidad</label><input class="fi" id="ce" value="'+c.entity+'"></div><div class="fg"><label>Fecha límite</label><input class="fi" type="date" id="cd" value="'+c.deadline+'"></div></div>';
+  h+='<div class="fr"><div class="fg"><label>Estado</label><select class="fi" id="cs"><option value="pendiente"'+(c.status==="pendiente"?" selected":"")+'>Pendiente</option><option value="en_progreso"'+(c.status==="en_progreso"?" selected":"")+'>En Progreso</option><option value="completado"'+(c.status==="completado"?" selected":"")+'>Completado</option></select></div><div class="fg"><label>Prioridad</label><select class="fi" id="cp"><option value="alta"'+(c.priority==="alta"?" selected":"")+'>Alta</option><option value="media"'+(c.priority==="media"?" selected":"")+'>Media</option><option value="baja"'+(c.priority==="baja"?" selected":"")+'>Baja</option></select></div></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveComp('+i+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveComp(i){var o={id:i>=0?D.compliance[i].id:nid(),title:document.getElementById("ct").value,entity:document.getElementById("ce").value,deadline:document.getElementById("cd").value,status:document.getElementById("cs").value,priority:document.getElementById("cp").value};if(i>=0)D.compliance[i]=o;else D.compliance.push(o);save();closeModal();render();toast(i>=0?"Obligación actualizada":"Obligación creada")}
+function delComp(i){if(confirm("¿Eliminar esta obligación?")){D.compliance.splice(i,1);save();render();toast("Obligación eliminada")}}
+
+// ══════ OFICIOS CONTRALORÍA ══════
+function rOficios(){
+  var el=document.getElementById("sc");
+  // Calculate alerts
+  var overdue=D.oficios.filter(function(o){return o.status!=="respondido"&&o.status!=="completado"&&daysLeft(o.fechaLimite)<0});
+  var urgent=D.oficios.filter(function(o){return o.status!=="respondido"&&o.status!=="completado"&&daysLeft(o.fechaLimite)>=0&&daysLeft(o.fechaLimite)<=7});
+  var pend=D.oficios.filter(function(o){return o.status==="pendiente"}).length;
+  var prog=D.oficios.filter(function(o){return o.status==="en_progreso"}).length;
+  var resp=D.oficios.filter(function(o){return o.status==="respondido"}).length;
+  var h="";
+  // Info banner about real data
+  h+='<div style="background:rgba(58,134,168,.1);border:1px solid rgba(58,134,168,.25);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--txl);line-height:1.6"><strong style="color:#3A86A8">ℹ️ Sobre este registro:</strong> Se ha conservado únicamente el <strong>Oficio N°59418/2026 (CIPA)</strong> que es real. Usa el botón <strong>"+ Nuevo Oficio"</strong> para agregar los demás oficios reales que tengas en tu gestión.</div>';
+  // Alert banner
+  if(overdue.length>0){h+='<div class="alert-banner"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg><div><strong>⚠️ '+overdue.length+' oficio'+(overdue.length>1?"s":"")+' con plazo vencido.</strong> Riesgo de responsabilidad administrativa (Art. 160-161 Ley 10.336). Requiere atención inmediata.</div></div>';}
+  if(urgent.length>0&&overdue.length===0){h+='<div style="background:linear-gradient(135deg,#DDA15E,#c49040);color:#fff;border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><strong>'+urgent.length+' oficio'+(urgent.length>1?"s":"")+' con plazo próximo a vencer</strong> (menos de 7 días).</div></div>';}
+  // Stats
+  h+='<div class="g g4 mb24">';
+  [{l:"Pendientes",v:pend,c:"#BC4749"},{l:"En Progreso",v:prog,c:"#DDA15E"},{l:"Respondidos",v:resp,c:"#40916C"},{l:"Vencidos",v:overdue.length,c:overdue.length>0?"#BC4749":"#52796F"}].forEach(function(s){
+    h+='<div class="cd cds" style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:10px;background:'+s.c+'18;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+s.c+'" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div style="font-size:22px;font-weight:700">'+s.v+'</div><div style="font-size:11px;color:var(--txl)">'+s.l+'</div></div></div>';
+  });
+  h+='</div>';
+  // Oficios list
+  h+='<div class="cd mb24"><div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Registro de Oficios</h3><button class="bp" onclick="editOficio(-1)">+ Nuevo Oficio</button></div>';
+  // Sort: overdue first, then by deadline
+  var sorted=D.oficios.slice().sort(function(a,b){if(a.status==="respondido"&&b.status!=="respondido")return 1;if(a.status!=="respondido"&&b.status==="respondido")return -1;return new Date(a.fechaLimite)-new Date(b.fechaLimite)});
+  sorted.forEach(function(o,i){
+    var dl=daysLeft(o.fechaLimite);var isResp=o.status==="respondido"||o.status==="completado";
+    var dc2=isResp?"ok":daysClass(dl);
+    var st=isResp?"respondido":(dl<0?"vencido":o.status);
+    h+='<div class="ofi-row" style="'+(isResp?"opacity:.6":"")+'"><div class="ofi-days '+dc2+'"><div style="font-size:18px">'+(isResp?"✓":daysLabel(dl))+'</div><div style="font-size:10px;font-weight:400">'+(isResp?"Cerrado":"restantes")+'</div></div>';
+    h+='<div class="ofi-main"><div class="ofi-title">'+o.nOficio+' — '+o.materia+'</div>';
+    h+='<div class="ofi-sub">📌 Origen: '+o.origen+'<br>👤 Responsable: '+o.responsable+'<br>📅 Recepción: '+fd(o.fechaRecep)+' — Plazo: '+o.plazo+' días — Límite: '+fd(o.fechaLimite)+'</div>';
+    if(o.obs)h+='<div class="ofi-obs">💬 '+o.obs+'</div>';
+    h+=renderAdjuntos(o,"oficio",i);
+    h+='</div>'+bd(st)+'<button class="be" onclick="editOficio('+i+')" title="Editar">✏️</button><button class="bdel" onclick="delOficio('+i+')" title="Eliminar">🗑</button></div>';
+  });
+  h+='</div>';
+  // Legal tip
+  h+='<div class="cdl"><h4 style="margin:0 0 8px;font-size:14px;font-weight:600">⚖️ Plazos Legales de Referencia</h4><div style="font-size:13px;color:var(--txl);line-height:1.8"><strong>Oficios Contraloría:</strong> Generalmente 30 días hábiles desde recepción (puede variar según requerimiento).<br><strong>Sumarios:</strong> 20 días para designar fiscal (Art. 133 Ley 18.883).<br><strong>Auditorías:</strong> 30 días para responder informe preliminar.<br><strong>Toma de razón:</strong> 15 días para pronunciamiento (Art. 10 Ley 10.336).<br><strong>Responsabilidad:</strong> El incumplimiento puede generar responsabilidad administrativa del Administrador Municipal y jefatura respectiva.<br><strong>Tip:</strong> Mantener registro centralizado con copia a Asesoría Jurídica y Dirección de Control.</div></div>';
+  el.innerHTML=h;
+}
+function editOficio(i){
+  var o=i>=0?D.oficios[i]:{id:nid(),nOficio:"",materia:"",origen:"Contraloría Regional Valparaíso",fechaRecep:new Date().toISOString().slice(0,10),plazo:30,fechaLimite:"",responsable:"",status:"pendiente",obs:""};var isN=i<0;
+  var h='<div class="mh"><h2>'+(isN?"Nuevo":"Editar")+' Oficio</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fr"><div class="fg"><label>N° Oficio</label><input class="fi" id="on" value="'+o.nOficio+'"></div><div class="fg"><label>Origen</label><input class="fi" id="oo2" value="'+o.origen+'"></div></div>';
+  h+='<div class="fg"><label>Materia</label><input class="fi" id="om2" value="'+o.materia+'"></div>';
+  h+='<div class="fr"><div class="fg"><label>Fecha Recepción</label><input class="fi" type="date" id="ofr" value="'+o.fechaRecep+'"></div><div class="fg"><label>Plazo (días)</label><input class="fi" type="number" id="opl" value="'+o.plazo+'"></div><div class="fg"><label>Fecha Límite</label><input class="fi" type="date" id="ofl" value="'+o.fechaLimite+'"></div></div>';
+  h+='<div class="fr"><div class="fg"><label>Responsable</label><input class="fi" id="ors" value="'+o.responsable+'"></div><div class="fg"><label>Estado</label><select class="fi" id="ost"><option value="pendiente"'+(o.status==="pendiente"?" selected":"")+'>Pendiente</option><option value="en_progreso"'+(o.status==="en_progreso"?" selected":"")+'>En Progreso</option><option value="respondido"'+(o.status==="respondido"?" selected":"")+'>Respondido</option></select></div></div>';
+  h+='<div class="fg"><label>Observaciones</label><input class="fi" id="oob" value="'+o.obs+'"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveOficio('+i+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveOficio(i){var o={id:i>=0?D.oficios[i].id:nid(),nOficio:document.getElementById("on").value,materia:document.getElementById("om2").value,origen:document.getElementById("oo2").value,fechaRecep:document.getElementById("ofr").value,plazo:parseInt(document.getElementById("opl").value)||30,fechaLimite:document.getElementById("ofl").value,responsable:document.getElementById("ors").value,status:document.getElementById("ost").value,obs:document.getElementById("oob").value};if(i>=0)D.oficios[i]=o;else D.oficios.push(o);save();closeModal();render();toast(i>=0?"Oficio actualizado":"Oficio registrado")}
+function delOficio(i){if(confirm("¿Eliminar este oficio?")){D.oficios.splice(i,1);save();render();toast("Oficio eliminado")}}
+
+// ══════ SUMARIOS E INVESTIGACIONES ══════
+var SUM_STATUS={instruccion:"En Instrucción",vista_fiscal:"Vista Fiscal",cargos:"Formulación de Cargos",resolucion:"Resolución Pendiente",cerrado:"Cerrado",sobreseido:"Sobreseído"};
+var SUM_TIPO={investigacion:"Investigación Sumaria",sumario:"Sumario Administrativo"};
+function rSumarios(){
+  if(!D.sumarios)D.sumarios=[];
+  var el=document.getElementById("sc");
+  // Stats
+  var enCurso=D.sumarios.filter(function(s){return s.status!=="cerrado"&&s.status!=="sobreseido"}).length;
+  var cerrados=D.sumarios.filter(function(s){return s.status==="cerrado"||s.status==="sobreseido"}).length;
+  var inv=D.sumarios.filter(function(s){return s.tipo==="investigacion"&&s.status!=="cerrado"&&s.status!=="sobreseido"}).length;
+  var sum=D.sumarios.filter(function(s){return s.tipo==="sumario"&&s.status!=="cerrado"&&s.status!=="sobreseido"}).length;
+  var h='';
+  // Info banner
+  h+='<div style="background:rgba(58,134,168,.1);border:1px solid rgba(58,134,168,.25);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--txl);line-height:1.6"><strong style="color:#3A86A8">📋 Procedimientos Disciplinarios:</strong> Esta sección permite hacer seguimiento a los sumarios administrativos e investigaciones sumarias decretados (Ley 18.883, Título V). Los datos son <strong>reservados</strong> conforme al Art. 137.</div>';
+  // Stats grid
+  h+='<div class="g g4 mb24">';
+  [{l:"En Curso",v:enCurso,c:"#DDA15E"},{l:"Investig. Sumarias",v:inv,c:"#3A86A8"},{l:"Sumarios Admin.",v:sum,c:"#9D4EDD"},{l:"Cerrados/Sobreseídos",v:cerrados,c:"#40916C"}].forEach(function(s){
+    h+='<div class="cd cds" style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:10px;background:'+s.c+'18;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="'+s.c+'" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 12v5"/><path d="M11 7v10"/><path d="M15 10v7"/><path d="M19 5v12"/></svg></div><div><div style="font-size:22px;font-weight:700">'+s.v+'</div><div style="font-size:11px;color:var(--txl)">'+s.l+'</div></div></div>';
+  });
+  h+='</div>';
+  // List
+  h+='<div class="cd mb24"><div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Registro de Procedimientos</h3><button class="bs" onclick="openSumExcel()">📂 Cargar Excel</button><button class="bp" onclick="editSumario(-1)">+ Nuevo</button></div>';
+  if(D.sumarios.length===0){h+='<p style="text-align:center;color:var(--txl);padding:20px;font-size:13px">No hay sumarios o investigaciones registrados.</p>';}
+  else{
+    var sorted=D.sumarios.slice().sort(function(a,b){
+      var aClosed=(a.status==="cerrado"||a.status==="sobreseido");
+      var bClosed=(b.status==="cerrado"||b.status==="sobreseido");
+      if(aClosed!==bClosed)return aClosed?1:-1;
+      return new Date(b.fechaDecreto)-new Date(a.fechaDecreto);
+    });
+    sorted.forEach(function(s,i){
+      var dl=daysLeft(addDays(s.fechaDecreto,s.plazoBase));
+      var isClosed=(s.status==="cerrado"||s.status==="sobreseido");
+      var badgeClass=s.tipo==="sumario"?"bd-en_progreso":"bd-ejecucion";
+      var typeColor=s.tipo==="sumario"?"#9D4EDD":"#3A86A8";
+      h+='<div class="ofi-row" style="'+(isClosed?"opacity:.55":"")+'">';
+      if(!isClosed){
+        var dc2=daysClass(dl);
+        h+='<div class="ofi-days '+dc2+'"><div style="font-size:18px">'+(dl<0?Math.abs(dl)+"d":dl===0?"HOY":dl+"d")+'</div><div style="font-size:10px;font-weight:400">'+(dl<0?"vencido":"plazo")+'</div></div>';
+      }else{
+        h+='<div class="ofi-days ok"><div style="font-size:18px">✓</div><div style="font-size:10px;font-weight:400">Cerrado</div></div>';
+      }
+      h+='<div class="ofi-main"><div class="ofi-title"><span style="background:'+typeColor+'18;color:'+typeColor+';padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;margin-right:6px">'+SUM_TIPO[s.tipo]+'</span>'+s.decreto+'</div>';
+      h+='<div class="ofi-sub">📌 '+s.materia+'<br>👤 Fiscal: '+s.fiscal+'<br>📅 Decretado: '+fd(s.fechaDecreto)+' — Plazo base: '+s.plazoBase+' días — Estado: <strong>'+SUM_STATUS[s.status]+'</strong></div>';
+      if(s.obs)h+='<div class="ofi-obs">💬 '+s.obs+'</div>';
+      h+=renderAdjuntos(s,"sumario",i);
+      h+='</div><button class="be" onclick="editSumario('+i+')" title="Editar">✏️</button><button class="bdel" onclick="delSumario('+i+')" title="Eliminar">🗑</button></div>';
+    });
+  }
+  h+='</div>';
+  // Legal reference
+  h+='<div class="cdl"><h4 style="margin:0 0 8px;font-size:14px;font-weight:600">⚖️ Marco Legal — Ley 18.883 (Estatuto Administrativo Funcionarios Municipales)</h4><div style="font-size:13px;color:var(--txl);line-height:1.8"><strong>Investigación Sumaria (Art. 126):</strong> Plazo de 5 días, prorrogable. Procede para faltas administrativas leves.<br><strong>Sumario Administrativo (Arts. 127-143):</strong> Plazo de 20 días para investigar, prorrogable hasta 60 días. Para faltas que ameriten sanciones graves.<br><strong>Etapas:</strong> Decreto → Designación Fiscal → Instrucción → Vista Fiscal → Formulación de Cargos → Descargos → Resolución.<br><strong>Sanciones (Art. 120):</strong> Censura, Multa, Suspensión, Destitución.<br><strong>Reserva (Art. 137):</strong> Los procedimientos son secretos hasta la formulación de cargos.</div></div>';
+  el.innerHTML=h;
+}
+function addDays(dateStr,days){var d=new Date(dateStr+"T12:00:00");d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)}
+function editSumario(i){
+  var s=i>=0?D.sumarios[i]:{id:nid(),tipo:"investigacion",decreto:"",fechaDecreto:new Date().toISOString().slice(0,10),fiscal:"",materia:"",plazoBase:5,status:"instruccion",obs:""};
+  var isN=i<0;
+  var h='<div class="mh"><h2>'+(isN?"Nuevo":"Editar")+' Procedimiento</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fr"><div class="fg"><label>Tipo</label><select class="fi" id="stp" onchange="document.getElementById(\'spl\').value=this.value===\'sumario\'?20:5"><option value="investigacion"'+(s.tipo==="investigacion"?" selected":"")+'>Investigación Sumaria</option><option value="sumario"'+(s.tipo==="sumario"?" selected":"")+'>Sumario Administrativo</option></select></div><div class="fg"><label>N° Decreto Alcaldicio</label><input class="fi" id="sdc" value="'+s.decreto+'" placeholder="DA N°XXX/2026"></div></div>';
+  h+='<div class="fg"><label>Materia / Hechos investigados</label><input class="fi" id="smt" value="'+s.materia.replace(/"/g,"&quot;")+'"></div>';
+  h+='<div class="fr"><div class="fg"><label>Fecha Decreto</label><input class="fi" type="date" id="sfd" value="'+s.fechaDecreto+'"></div><div class="fg"><label>Plazo Base (días)</label><input class="fi" type="number" id="spl" value="'+s.plazoBase+'"></div></div>';
+  h+='<div class="fg"><label>Fiscal Designado</label><input class="fi" id="sfi" value="'+s.fiscal+'"></div>';
+  h+='<div class="fg"><label>Estado Procesal</label><select class="fi" id="sst">';
+  Object.keys(SUM_STATUS).forEach(function(k){h+='<option value="'+k+'"'+(s.status===k?" selected":"")+'>'+SUM_STATUS[k]+'</option>'});
+  h+='</select></div>';
+  h+='<div class="fg"><label>Observaciones</label><input class="fi" id="sob" value="'+s.obs.replace(/"/g,"&quot;")+'"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveSumario('+i+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveSumario(i){
+  var o={id:i>=0?D.sumarios[i].id:nid(),tipo:document.getElementById("stp").value,decreto:document.getElementById("sdc").value,fechaDecreto:document.getElementById("sfd").value,fiscal:document.getElementById("sfi").value,materia:document.getElementById("smt").value,plazoBase:parseInt(document.getElementById("spl").value)||5,status:document.getElementById("sst").value,obs:document.getElementById("sob").value};
+  if(i>=0)D.sumarios[i]=o;else D.sumarios.push(o);
+  logAction(i>=0?"Sumario editado":"Sumario creado",o.decreto+" — "+o.materia,"sumarios");save();closeModal();render();toast(i>=0?"Procedimiento actualizado":"Procedimiento registrado");
+}
+function delSumario(i){if(confirm("¿Eliminar este procedimiento?")){D.sumarios.splice(i,1);save();render();toast("Procedimiento eliminado")}}
+
+// ══════ CONTRATACIÓN ══════
+function rContratacion(){
+  var el=document.getElementById("sc");
+  var h='<div class="cd tw mb24"><div class="bar"><h3 style="font-size:15px;font-weight:600;flex:1">Licitaciones Recientes — Mercado Público (RUT 69.060.400-0)</h3><button class="bp" onclick="editOC(-1)">+ Nueva OC</button></div>';
+  h+='<table><thead><tr><th>Código</th><th>Descripción</th><th>Tipo Licitación</th><th>Monto</th><th>Estado</th><th></th></tr></thead><tbody>';
+  D.mercado.forEach(function(oc,i){h+='<tr class="'+(i%2===0?"ra":"rn")+'"><td class="oc-id">'+oc.oc+'</td><td style="font-size:12px">'+oc.tipo+'</td><td style="font-size:12px;color:var(--txl)">'+oc.prov+'</td><td style="font-weight:600">'+oc.monto+'</td><td>'+bd(oc.estado)+'</td><td style="white-space:nowrap"><button class="be" onclick="editOC('+i+')">✏️</button><button class="bdel" onclick="delOC('+i+')">🗑</button></td></tr>'});
+  h+='</tbody></table></div>';
+  h+='<div class="cdt"><h4 style="margin:0 0 8px;font-size:14px;font-weight:600">📋 Checklist Contratación — DS 661/2024 (Nuevo Reglamento)</h4><div class="ck">✅ Verificar CDP antes de iniciar proceso<br>✅ Consultar Catálogo Convenio Marco y Plataforma Economía Circular (DS 661/2024)<br>✅ Bases conforme al nuevo Reglamento DS 661/2024 (202 artículos)<br>✅ Proveedores inscritos y hábiles en Registro (Ley 21.634)<br>✅ Evaluar Programa de Integridad del oferente como criterio<br>✅ Publicar adjudicación con resolución fundada en Mercado Público<br>✅ Verificar que proveedor no tenga deudas previsionales/tributarias<br>📎 <a href="https://datos-abiertos.chilecompra.cl/ficha-organismo/118072" target="_blank" style="color:var(--pri-s)">Ver ficha Llay-Llay en Datos Abiertos ChileCompra</a></div></div>';
+  el.innerHTML=h;
+}
+function editOC(i){
+  var o=i>=0?D.mercado[i]:{id:nid(),oc:"",prov:"",monto:"",estado:"pendiente",tipo:"Licitación Pública"};var isN=i<0;
+  var h='<div class="mh"><h2>'+(isN?"Nueva":"Editar")+' Orden de Compra</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fr"><div class="fg"><label>N° OC</label><input class="fi" id="oo" value="'+o.oc+'"></div><div class="fg"><label>Proveedor</label><input class="fi" id="op" value="'+o.prov+'"></div></div>';
+  h+='<div class="fr"><div class="fg"><label>Monto</label><input class="fi" id="om" value="'+o.monto+'"></div><div class="fg"><label>Descripción / Tipo</label><input class="fi" id="ot" value="'+o.tipo+'"</div></div>';
+  h+='<div class="fg"><label>Estado</label><select class="fi" id="oe"><option value="pendiente"'+(o.estado==="pendiente"?" selected":"")+'>Pendiente</option><option value="en_proceso"'+(o.estado==="en_proceso"?" selected":"")+'>En Proceso</option><option value="adjudicada"'+(o.estado==="adjudicada"?" selected":"")+'>Adjudicada</option><option value="completado"'+(o.estado==="completado"?" selected":"")+'>Completado</option></select></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveOC('+i+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveOC(i){var o={id:i>=0?D.mercado[i].id:nid(),oc:document.getElementById("oo").value,prov:document.getElementById("op").value,monto:document.getElementById("om").value,tipo:document.getElementById("ot").value,estado:document.getElementById("oe").value};if(i>=0)D.mercado[i]=o;else D.mercado.push(o);save();closeModal();render();toast(i>=0?"OC actualizada":"OC creada")}
+function delOC(i){if(confirm("¿Eliminar esta orden de compra?")){D.mercado.splice(i,1);save();render();toast("OC eliminada")}}
+
+// ══════ TAREAS ══════
+function tToggle(id){D.tasks=D.tasks.map(function(t){return t.id===id?{id:t.id,title:t.title,date:t.date,cat:t.cat,done:!t.done}:t});save();render()}
+function tDel(id){D.tasks=D.tasks.filter(function(t){return t.id!==id});save();render();toast("Tarea eliminada")}
+function tAdd(){var inp=document.getElementById("ntI");var dt=document.getElementById("ntD");var ct=document.getElementById("ntC");if(!inp||!inp.value.trim())return;D.tasks.push({id:nid(),title:inp.value.trim(),date:dt.value||new Date().toISOString().slice(0,10),cat:ct.value||"personal",done:false});save();render();toast("Tarea agregada")}
+function tEdit(id){
+  var t=D.tasks.filter(function(x){return x.id===id})[0];if(!t)return;
+  openModal('<div class="mh"><h2>Editar Tarea</h2><button class="mx" onclick="closeModal()">✕</button></div><div class="fg"><label>Descripción</label><input class="fi" id="et" value="'+t.title+'"></div><div class="fr"><div class="fg"><label>Fecha</label><input class="fi" type="date" id="ed" value="'+t.date+'"></div><div class="fg"><label>Categoría</label><input class="fi" id="ec" value="'+t.cat+'"></div></div><div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="tSave('+id+')">Guardar</button></div>');
+}
+function tSave(id){D.tasks=D.tasks.map(function(t){return t.id===id?{id:t.id,title:document.getElementById("et").value,date:document.getElementById("ed").value,cat:document.getElementById("ec").value,done:t.done}:t});save();closeModal();render();toast("Tarea actualizada")}
+
+var taskFilter={cat:"todas",estado:"todas",desde:"",hasta:"",search:""};
+function rTareas(){
+  var el=document.getElementById("sc");
+  var h='<div class="cd mb24"><h3 style="margin:0 0 16px;font-size:15px;font-weight:600">Agregar Nueva Tarea</h3><div style="display:flex;gap:10px;flex-wrap:wrap"><input class="fi" type="text" id="ntI" placeholder="Descripción..." style="flex:1 1 200px" onkeydown="if(event.key===\'Enter\')tAdd()"><input class="fi" type="date" id="ntD" style="width:auto"><input class="fi" type="text" id="ntC" placeholder="Categoría" style="width:120px"><button class="bp" onclick="tAdd()">+ Agregar</button></div></div>';
+  // Filter panel
+  var cats=[];D.tasks.forEach(function(t){if(cats.indexOf(t.cat)<0)cats.push(t.cat)});
+  h+='<div class="cd mb24"><h3 style="margin:0 0 12px;font-size:14px;font-weight:600">🔍 Filtros</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">';
+  h+='<div><label style="font-size:11px;color:var(--txl);font-weight:600">Categoría</label><select class="fi" onchange="taskFilter.cat=this.value;rTareas()"><option value="todas">Todas</option>';
+  cats.forEach(function(c){h+='<option value="'+c+'"'+(taskFilter.cat===c?" selected":"")+'>'+c+'</option>'});
+  h+='</select></div>';
+  h+='<div><label style="font-size:11px;color:var(--txl);font-weight:600">Estado</label><select class="fi" onchange="taskFilter.estado=this.value;rTareas()"><option value="todas"'+(taskFilter.estado==="todas"?" selected":"")+'>Todas</option><option value="pendientes"'+(taskFilter.estado==="pendientes"?" selected":"")+'>Pendientes</option><option value="completadas"'+(taskFilter.estado==="completadas"?" selected":"")+'>Completadas</option><option value="vencidas"'+(taskFilter.estado==="vencidas"?" selected":"")+'>Vencidas</option><option value="hoy"'+(taskFilter.estado==="hoy"?" selected":"")+'>Para hoy</option><option value="semana"'+(taskFilter.estado==="semana"?" selected":"")+'>Esta semana</option></select></div>';
+  h+='<div><label style="font-size:11px;color:var(--txl);font-weight:600">Desde</label><input class="fi" type="date" value="'+taskFilter.desde+'" onchange="taskFilter.desde=this.value;rTareas()"></div>';
+  h+='<div><label style="font-size:11px;color:var(--txl);font-weight:600">Hasta</label><input class="fi" type="date" value="'+taskFilter.hasta+'" onchange="taskFilter.hasta=this.value;rTareas()"></div>';
+  h+='<div style="grid-column:1/-1"><input class="fi" type="text" placeholder="🔍 Buscar en tareas..." value="'+taskFilter.search.replace(/"/g,"&quot;")+'" oninput="taskFilter.search=this.value;rTareas()"></div>';
+  h+='</div>';
+  if(taskFilter.cat!=="todas"||taskFilter.estado!=="todas"||taskFilter.desde||taskFilter.hasta||taskFilter.search){
+    h+='<div style="margin-top:10px;text-align:right"><button class="bs" onclick="taskFilter={cat:\'todas\',estado:\'todas\',desde:\'\',hasta:\'\',search:\'\'};rTareas()">Limpiar filtros</button></div>';
+  }
+  h+='</div>';
+  // Apply filters
+  var today=new Date().toISOString().slice(0,10);
+  var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);var we=weekEnd.toISOString().slice(0,10);
+  var filtered=D.tasks.filter(function(t){
+    if(taskFilter.cat!=="todas"&&t.cat!==taskFilter.cat)return false;
+    if(taskFilter.estado==="pendientes"&&t.done)return false;
+    if(taskFilter.estado==="completadas"&&!t.done)return false;
+    if(taskFilter.estado==="vencidas"&&(t.done||t.date>=today))return false;
+    if(taskFilter.estado==="hoy"&&t.date!==today)return false;
+    if(taskFilter.estado==="semana"&&(t.date<today||t.date>we))return false;
+    if(taskFilter.desde&&t.date<taskFilter.desde)return false;
+    if(taskFilter.hasta&&t.date>taskFilter.hasta)return false;
+    if(taskFilter.search&&(t.title+" "+t.cat).toLowerCase().indexOf(taskFilter.search.toLowerCase())<0)return false;
+    return true;
+  });
+  var sorted=filtered.sort(function(a,b){return new Date(a.date)-new Date(b.date)});
+  h+='<div class="cd"><h3 style="margin:0 0 20px;font-size:15px;font-weight:600">Agenda <span style="font-size:12px;color:var(--txl);font-weight:400">('+sorted.length+' de '+D.tasks.length+')</span></h3>';
+  if(!sorted.length)h+='<p style="color:var(--txl);text-align:center;padding:20px">'+(D.tasks.length===0?"Sin tareas.":"Sin resultados para los filtros.")+'</p>';
+  sorted.forEach(function(t){h+='<div class="ti'+(t.done?" dn":"")+'"><input type="checkbox" '+(t.done?"checked":"")+' onchange="tToggle('+t.id+')"><div style="flex:1"><div class="tt'+(t.done?" sk":"")+'">'+t.title+'</div><div class="tm"><span style="font-size:11px;color:var(--txl)">📅 '+fd(t.date)+'</span><span class="ct-tag">'+t.cat+'</span></div></div><button class="be" onclick="tEdit('+t.id+')" title="Editar">✏️</button><button class="bdel" onclick="tDel('+t.id+')" title="Eliminar">🗑</button></div>'});
+  h+='</div>';el.innerHTML=h;
+}
+
+// ══════ GUÍA ══════
+function rGuia(){
+  var items=[
+    {t:"🎯 Tu Rol: Art. 30 Ley 18.695",c:"Eres el colaborador directo del Alcalde en la coordinación y gestión permanente del municipio. Elaboras y das seguimiento al Plan Anual de Acción Municipal. Subrogas al Alcalde cuando corresponde y ejerces control jerárquico sobre todas las unidades."},
+    {t:"📌 Funciones Principales",l:["Coordinar todas las unidades municipales y servicios municipalizados","Velar por el cumplimiento de la gestión técnica de políticas y programas","Ejercer atribuciones delegadas por el Alcalde","Dictar resoluciones con V°B° de Asesoría Jurídica","Coordinar con servicios públicos en la comuna","Establecer procedimientos para rutinas administrativas","Solicitar auditorías a Control cuando sea necesario"]},
+    {t:"⚡ Primeros 90 Días",l:["Semana 1-2: Reuniones individuales con cada jefatura","Semana 3-4: Revisión del PLADECO y cumplimiento","Semana 5-6: Auditoría de procesos y manuales","Semana 7-8: Sistema de reportes semanales","Semana 9-10: Brechas de dotación y capacitación","Semana 11-12: Propuesta de Plan de Gestión al Alcalde"]},
+    {t:"🔑 Instrumentos de Gestión",l:["PLADECO — Planificación estratégica comunal","Plan Regulador — Uso de suelo y desarrollo urbano","Presupuesto Municipal — Ingresos, gastos, modificaciones","Plan Anual de Acción — Tu instrumento central","Ordenanzas Municipales — Normativa local","Mercado Público / ChileCompra — DS 661/2024 (nuevo reglamento)"]},
+    {t:"⚠️ Riesgos Frecuentes",l:["Incumplimiento de plazos de Contraloría","Irregularidades en contratación (Ley 19.886)","Falta de respaldo documental","Descoordinación entre unidades","Ejecución presupuestaria deficiente","No informar al Concejo (Art. 79)"]},
+    {t:"📚 Normativa Esencial",c:"Ley 18.695 (Orgánica Municipalidades) · Ley 18.883 (Estatuto Administrativo) · Ley 19.886 mod. Ley 21.634 + DS 661/2024 (Compras) · Ley 20.285 (Transparencia) · Ley 20.880 (Probidad) · Ley 10.336 (Contraloría) · DL 3.063 (Rentas) · Ley 19.880 (Procedimiento Administrativo)"}
+  ];
+  var el=document.getElementById("sc");var h="";
+  items.forEach(function(s){h+='<div class="cd" style="margin-bottom:20px"><h3 style="margin:0 0 12px;font-size:16px;font-weight:700">'+s.t+'</h3>';if(s.c)h+='<p class="gc">'+s.c+'</p>';if(s.l)s.l.forEach(function(it){h+='<div class="gi"><span class="gb">›</span><span>'+it+'</span></div>'});h+='</div>'});
+  el.innerHTML=h;
+}
+
+// ══════ NOTIFICATIONS ══════
+function getNotifications(){
+  var n=[];
+  // Oficios pendientes
+  if(D.oficios){D.oficios.forEach(function(o){
+    if(o.status==="respondido"||o.status==="completado")return;
+    var dl=daysLeft(o.fechaLimite);
+    if(dl>30)return;
+    var urg=dl<0?"urg":dl<=7?"warn":"soon";
+    n.push({type:"oficio",urg:urg,icon:"📄",title:o.nOficio,subtitle:o.materia+" — "+o.responsable,days:dl,daysLabel:dl<0?Math.abs(dl)+"d venc.":dl===0?"HOY":dl+"d",section:"oficios",sortKey:dl});
+  })}
+  // Compliance pendientes
+  if(D.compliance){D.compliance.forEach(function(c){
+    if(c.status==="completado")return;
+    var dl=daysLeft(c.deadline);
+    if(dl>30)return;
+    var urg=dl<0?"urg":dl<=7?"warn":"soon";
+    n.push({type:"compliance",urg:urg,icon:"⚖️",title:c.title,subtitle:c.entity,days:dl,daysLabel:dl<0?Math.abs(dl)+"d venc.":dl===0?"HOY":dl+"d",section:"compliance",sortKey:dl});
+  })}
+  // Tareas agenda HOY o mañana
+  if(D.tasks){D.tasks.forEach(function(t){
+    if(t.done)return;
+    var dl=daysLeft(t.date);
+    if(dl<-1||dl>3)return;
+    var urg=dl<0?"urg":dl<=1?"warn":"soon";
+    n.push({type:"task",urg:urg,icon:"📅",title:t.title,subtitle:"Agenda — "+t.cat,days:dl,daysLabel:dl<0?"venc.":dl===0?"HOY":dl===1?"mañana":dl+"d",section:"tareas",sortKey:dl});
+  })}
+  // Tareas alta prioridad por unidad (no done)
+  if(D.units){D.units.forEach(function(u,ui){
+    if(!u.taskList)return;
+    u.taskList.forEach(function(t){
+      if(t.done||t.pri!=="alta")return;
+      n.push({type:"unit",urg:"high",icon:"🎯",title:t.title,subtitle:"Unidad: "+u.name,days:999,daysLabel:"alta",section:"unidades",sortKey:1000+ui});
+    });
+  })}
+  // Sort: urg first, then warn, then soon, then high
+  var order={urg:0,warn:1,soon:2,high:3};
+  n.sort(function(a,b){var oa=order[a.urg],ob=order[b.urg];if(oa!==ob)return oa-ob;return a.sortKey-b.sortKey});
+  return n;
+}
+
+function updateNotifBadge(){
+  var n=getNotifications();
+  var c=document.getElementById("notifCounter");
+  if(!c)return;
+  var critical=n.filter(function(x){return x.urg==="urg"||x.urg==="warn"}).length;
+  if(critical>0){c.textContent=critical>99?"99+":critical;c.style.display="flex"}
+  else{c.style.display="none"}
+}
+
+function toggleNotifs(e){
+  if(e)e.stopPropagation();
+  var p=document.getElementById("notifPanel");
+  if(p.classList.contains("open")){p.classList.remove("open");return}
+  renderNotifPanel();
+  p.classList.add("open");
+}
+
+function renderNotifPanel(){
+  var n=getNotifications();
+  var b=document.getElementById("notifBody");
+  if(n.length===0){
+    b.innerHTML='<div class="notif-empty"><span class="notif-empty-icon">✨</span>No tienes notificaciones pendientes.<br><span style="font-size:11px">Todo está bajo control.</span></div>';
+    return;
+  }
+  // Group by urgency
+  var groups={urg:[],warn:[],soon:[],high:[]};
+  n.forEach(function(x){groups[x.urg].push(x)});
+  var titles={urg:"🔴 URGENTE / VENCIDO",warn:"🟡 PRÓXIMO A VENCER",soon:"🔵 ESTA SEMANA",high:"🟣 ALTA PRIORIDAD"};
+  var h="";
+  ["urg","warn","soon","high"].forEach(function(k){
+    if(groups[k].length===0)return;
+    h+='<div class="notif-section"><div class="notif-section-title">'+titles[k]+' · '+groups[k].length+'</div>';
+    groups[k].forEach(function(x){
+      h+='<div class="notif-item '+x.urg+'" onclick="goToSection(\''+x.section+'\')">';
+      h+='<div class="notif-icon">'+x.icon+'</div>';
+      h+='<div class="notif-content"><div class="notif-title">'+x.title+'</div><div class="notif-meta">'+x.subtitle+'</div></div>';
+      h+='<div class="notif-days '+x.urg+'">'+x.daysLabel+'</div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  b.innerHTML=h;
+}
+
+function goToSection(s){sec=s;buildNav();render();document.getElementById("notifPanel").classList.remove("open")}
+
+// Close panel when clicking outside
+document.addEventListener("click",function(e){
+  var p=document.getElementById("notifPanel");
+  var b=document.getElementById("notifBell");
+  if(!p||!b)return;
+  if(p.classList.contains("open")&&!p.contains(e.target)&&!b.contains(e.target)){
+    p.classList.remove("open");
+  }
+});
+
+
+
+function renderCuentasMini(b){
+  var ip=11924000000;var c21=b.cuentas.c21,c22=b.cuentas.c22,c24=b.cuentas.c24;
+  var p21=(c21.vigente/ip*100).toFixed(1),e21=(c21.pagado/c21.vigente*100).toFixed(1);
+  var e22=(c22.pagado/c22.vigente*100).toFixed(1),e24=(c24.pagado/c24.vigente*100).toFixed(1);
+  var p24=(c24.vigente/ip*100).toFixed(1);
+  var a21=parseFloat(p21)>40,col=parseFloat(p21)>42?'#BC4749':a21?'#DDA15E':'#40916C';
+  var h='<div class="cd mb24"><h3 style="margin:0 0 16px;font-size:15px;font-weight:600">📊 Mini-Tableros: Cuentas 21, 22 y 24</h3><div class="g g3" style="gap:14px">';
+  h+='<div style="border:2px solid '+col+';border-radius:12px;padding:14px;background:'+col+'10"><div style="font-size:11px;font-weight:700;color:'+col+';text-transform:uppercase">Cta 21 · Personal</div><div style="font-size:22px;font-weight:700;margin:4px 0">$'+formatMM(c21.vigente)+' MM</div><div style="font-size:11px;color:var(--txl);margin-bottom:6px">Pagado: '+e21+'%</div><div style="height:6px;background:#eee;border-radius:3px;margin-bottom:8px"><div style="width:'+e21+'%;height:100%;background:'+col+';border-radius:3px"></div></div><div style="background:#fff;border-radius:6px;padding:6px 10px;font-size:11px"><strong style="color:'+col+'">'+p21+'%</strong> de ingresos propios<br><span style="font-size:10px;color:var(--txl)">Límite legal 42% (Ley 21.561)</span></div>'+(a21?'<div style="margin-top:8px;font-size:11px;color:'+col+';font-weight:600">⚠️ '+(parseFloat(p21)>42?'EXCEDE LÍMITE':'Cerca del límite')+'</div>':'')+'</div>';
+  h+='<div style="border:2px solid #3A86A8;border-radius:12px;padding:14px;background:#3A86A810"><div style="font-size:11px;font-weight:700;color:#3A86A8;text-transform:uppercase">Cta 22 · Bienes y Servicios</div><div style="font-size:22px;font-weight:700;margin:4px 0">$'+formatMM(c22.vigente)+' MM</div><div style="font-size:11px;color:var(--txl);margin-bottom:6px">Pagado: '+e22+'%</div><div style="height:6px;background:#eee;border-radius:3px;margin-bottom:8px"><div style="width:'+e22+'%;height:100%;background:#3A86A8;border-radius:3px"></div></div><div style="background:#fff;border-radius:6px;padding:6px 10px;font-size:11px;color:var(--txl)">Operación municipal<br><span style="font-size:10px">Sin tope legal específico</span></div></div>';
+  var c4='#9D4EDD';
+  h+='<div style="border:2px solid '+c4+';border-radius:12px;padding:14px;background:'+c4+'10"><div style="font-size:11px;font-weight:700;color:'+c4+';text-transform:uppercase">Cta 24 · Transferencias</div><div style="font-size:22px;font-weight:700;margin:4px 0">$'+formatMM(c24.vigente)+' MM</div><div style="font-size:11px;color:var(--txl);margin-bottom:6px">Pagado: '+e24+'%</div><div style="height:6px;background:#eee;border-radius:3px;margin-bottom:8px"><div style="width:'+e24+'%;height:100%;background:'+c4+';border-radius:3px"></div></div><div style="background:#fff;border-radius:6px;padding:6px 10px;font-size:11px"><strong style="color:'+c4+'">'+p24+'%</strong> del presupuesto<br><span style="font-size:10px;color:var(--txl)">Subvenciones máx 7% (Art.5g L.18.695)</span></div></div>';
+  h+='</div>'+(a21?'<div style="margin-top:14px;background:rgba(188,71,73,.08);border-left:4px solid #BC4749;border-radius:8px;padding:12px 16px;font-size:12px"><strong style="color:#BC4749">🚨 Alerta Legal:</strong> Cuenta 21 cerca o sobre el límite del 42%. Coordinar con DAF.</div>':'')+'</div>';
+  return h;
+}
+
+function rTrimDashboard(t){
+  if(!t.contenido)return '';
+  var rows=t.contenido.filter(function(r){return r.length>=2&&r[0]&&!String(r[0]).startsWith('═')});
+  var labels=[],vals=[];
+  for(var i=0;i<Math.min(rows.length,15);i++){
+    var r=rows[i];var num=null;
+    for(var j=1;j<r.length;j++){
+      var n=parseFloat(String(r[j]).replace(/[^0-9.-]/g,''));
+      if(!isNaN(n)&&n>0){num=n;break}
+    }
+    if(num!==null&&String(r[0]).length<60){labels.push(String(r[0]).substring(0,30));vals.push(num)}
+  }
+  if(labels.length<2)return '';
+  var cid='trDash'+t.id;
+  var h='<div style="background:#fff;border:1px solid rgba(212,212,170,.3);border-radius:10px;padding:14px;margin-bottom:12px"><h4 style="font-size:13px;font-weight:700;margin-bottom:10px">📊 Visualización Automática</h4><div style="position:relative;height:240px"><canvas id="'+cid+'"></canvas></div></div>';
+  setTimeout(function(){
+    var ctx=document.getElementById(cid);
+    if(ctx)charts.push(new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Valor',data:vals,backgroundColor:'#40916C',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},maxRotation:45,minRotation:30}},y:{ticks:{font:{size:10}}}}}}));
+  },100);
+  return h;
+}
+
+
+// ══════ MACROPROCESOS ══════
+var MACRO_ST={en_progreso:"En Progreso",pendiente:"Pendiente",completado:"Completado",bloqueado:"Bloqueado"};
+function rMacroprocesos(){
+  if(!D.macroprocesos)D.macroprocesos=[];
+  var el=document.getElementById('sc');
+  var h='<p style="font-size:14px;color:var(--txl);margin-bottom:20px;line-height:1.6">Macroprocesos estratégicos que debe liderar la Administración Municipal durante el año 2026. Cada proceso tiene etapas con plazos, estados y observaciones totalmente editables.</p>';
+  D.macroprocesos.forEach(function(mp,mi){
+    var total=mp.etapas.length;
+    var done=mp.etapas.filter(function(e){return e.status==='completado'}).length;
+    var pct=total>0?Math.round(done/total*100):0;
+    var overdue=mp.etapas.filter(function(e){return e.status!=='completado'&&daysLeft(e.plazo)<0}).length;
+    h+='<div class="cd mb24" style="border-left:4px solid '+mp.color+'">';
+    h+='<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap"><div style="width:44px;height:44px;border-radius:50%;background:'+mp.color+'15;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+mp.color+'" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>';
+    h+='<div style="flex:1"><div style="font-size:17px;font-weight:700">'+mp.nombre+'</div><div style="font-size:12px;color:var(--txl);margin-top:2px">'+mp.desc.substring(0,120)+'...</div></div>';
+    h+='<div style="text-align:center;min-width:70px"><div style="font-size:22px;font-weight:700;color:'+mp.color+'">'+pct+'%</div><div style="font-size:10px;color:var(--txl)">'+done+'/'+total+' etapas</div></div></div>';
+    // Progress bar
+    h+='<div style="height:8px;background:#eee;border-radius:4px;margin-bottom:14px"><div style="width:'+pct+'%;height:100%;background:'+mp.color+';border-radius:4px;transition:width .3s"></div></div>';
+    if(overdue>0)h+='<div style="background:rgba(188,71,73,.08);border-left:3px solid #BC4749;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#BC4749;font-weight:600">⚠️ '+overdue+' etapa'+(overdue>1?'s':'')+' con plazo vencido</div>';
+    // Timeline / calendar
+    h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:'+mp.color+'10"><th style="padding:8px 12px;text-align:left">Etapa</th><th style="padding:8px 12px;text-align:center;width:100px">Plazo</th><th style="padding:8px 12px;text-align:center;width:80px">Días</th><th style="padding:8px 12px;text-align:center;width:120px">Estado</th><th style="padding:8px 12px;text-align:left">Observaciones</th><th style="padding:8px 12px;width:50px"></th></tr></thead><tbody>';
+    mp.etapas.forEach(function(et,ei){
+      var dl=daysLeft(et.plazo);
+      var isDone=et.status==='completado';
+      var dc2=isDone?'ok':daysClass(dl);
+      h+='<tr style="border-bottom:1px solid rgba(212,212,170,.2);'+(isDone?'opacity:.55':'')+'"><td style="padding:8px 12px;font-weight:500">'+et.nombre+'</td>';
+      h+='<td style="padding:8px 12px;text-align:center;font-size:11px">'+fd(et.plazo)+'</td>';
+      h+='<td style="padding:8px 12px;text-align:center"><span class="notif-days '+dc2+'" style="font-size:10px">'+(isDone?'✓':daysLabel(dl))+'</span></td>';
+      h+='<td style="padding:8px 12px;text-align:center">'+bd(et.status)+'</td>';
+      h+='<td style="padding:8px 12px;font-size:11px;color:var(--txl);font-style:italic">'+(et.obs||'—')+'</td>';
+      h+='<td style="padding:8px 12px"><button class="be" onclick="editMacroEtapa('+mi+','+ei+')" title="Editar">✏️</button></td></tr>';
+    });
+    h+='</tbody></table></div>';
+    // Notes
+    h+='<div class="unit-notes-label" style="margin-top:12px">📝 Notas generales del macroproceso:</div>';
+    h+='<textarea class="unit-notes" data-macro="'+mi+'" onchange="saveMacroNote(this)">'+((mp.notas||'').replace(/</g,'&lt;'))+'</textarea>';
+    h+='<div style="margin-top:8px;text-align:right"><button class="bs" onclick="addMacroEtapa('+mi+')">+ Agregar etapa</button></div>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+function saveMacroNote(el){var i=parseInt(el.getAttribute('data-macro'));D.macroprocesos[i].notas=el.value;save();toast('Nota guardada')}
+function editMacroEtapa(mi,ei){
+  var et=D.macroprocesos[mi].etapas[ei];
+  var h='<div class="mh"><h2>Editar Etapa</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Nombre de la etapa</label><input class="fi" id="meN" value="'+et.nombre.replace(/"/g,'&quot;')+'"></div>';
+  h+='<div class="fr"><div class="fg"><label>Plazo</label><input class="fi" type="date" id="meP" value="'+et.plazo+'"></div><div class="fg"><label>Estado</label><select class="fi" id="meS">';
+  Object.keys(MACRO_ST).forEach(function(k){h+='<option value="'+k+'"'+(et.status===k?' selected':'')+'>'+MACRO_ST[k]+'</option>'});
+  h+='</select></div></div>';
+  h+='<div class="fg"><label>Observaciones</label><textarea class="fi" id="meO" style="min-height:60px;resize:vertical;font-family:inherit">'+(et.obs||'').replace(/</g,'&lt;')+'</textarea></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bdel" style="margin-right:auto" onclick="delMacroEtapa('+mi+','+ei+')">🗑 Eliminar</button><button class="bp" onclick="saveMacroEtapa('+mi+','+ei+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveMacroEtapa(mi,ei){
+  var e=D.macroprocesos[mi].etapas[ei];
+  e.nombre=document.getElementById('meN').value;
+  e.plazo=document.getElementById('meP').value;
+  e.status=document.getElementById('meS').value;
+  e.obs=document.getElementById('meO').value;
+  save();closeModal();render();toast('Etapa actualizada');
+}
+function delMacroEtapa(mi,ei){
+  if(!confirm('¿Eliminar esta etapa?'))return;
+  D.macroprocesos[mi].etapas.splice(ei,1);save();closeModal();render();toast('Etapa eliminada');
+}
+function addMacroEtapa(mi){
+  var h='<div class="mh"><h2>Agregar Etapa</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Nombre</label><input class="fi" id="meN" value=""></div>';
+  h+='<div class="fr"><div class="fg"><label>Plazo</label><input class="fi" type="date" id="meP" value=""></div><div class="fg"><label>Estado</label><select class="fi" id="meS"><option value="pendiente" selected>Pendiente</option><option value="en_progreso">En Progreso</option><option value="completado">Completado</option><option value="bloqueado">Bloqueado</option></select></div></div>';
+  h+='<div class="fg"><label>Observaciones</label><textarea class="fi" id="meO" style="min-height:60px;resize:vertical;font-family:inherit"></textarea></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveNewMacroEtapa('+mi+')">Agregar</button></div>';
+  openModal(h);
+}
+function saveNewMacroEtapa(mi){
+  D.macroprocesos[mi].etapas.push({id:nid(),nombre:document.getElementById('meN').value,plazo:document.getElementById('meP').value,status:document.getElementById('meS').value,obs:document.getElementById('meO').value});
+  save();closeModal();render();toast('Etapa agregada');
+}
+
+// ══════ EXCEL UPLOAD: SUMARIOS ══════
+function openSumExcel(){
+  var h='<div class="mh"><h2>📂 Cargar Sumarios desde Excel</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<p style="font-size:13px;color:var(--txl);margin-bottom:14px;line-height:1.6">Sube un archivo Excel con sumarios. Columnas esperadas: <strong>Tipo, Decreto, Fecha Decreto, Fiscal, Materia, Plazo, Estado, Observaciones</strong>. La primera fila debe ser el encabezado.</p>';
+  h+='<div class="fg"><label>Archivo Excel (.xls / .xlsx)</label><input class="fi" type="file" id="sxF" accept=".xls,.xlsx"></div>';
+  h+='<div id="sxP" style="margin-top:14px"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="processSumExcel()">Cargar</button></div>';
+  openModal(h);
+}
+function processSumExcel(){
+  var file=document.getElementById("sxF").files[0];if(!file){alert("Selecciona un archivo");return}
+  var p=document.getElementById("sxP");p.innerHTML='<p style="color:var(--txl);font-size:13px">⏳ Procesando...</p>';
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""});
+      var added=0;
+      for(var i=1;i<rows.length;i++){
+        var r=rows[i];if(!r[0]&&!r[1])continue;
+        var tipo=String(r[0]||"investigacion").toLowerCase().indexOf("sumario")>=0?"sumario":"investigacion";
+        D.sumarios.push({id:nid(),tipo:tipo,decreto:String(r[1]||""),fechaDecreto:String(r[2]||new Date().toISOString().slice(0,10)),fiscal:String(r[3]||""),materia:String(r[4]||""),plazoBase:parseInt(r[5])||(tipo==="sumario"?20:5),status:String(r[6]||"instruccion").toLowerCase().replace(/ /g,"_"),obs:String(r[7]||"")});
+        added++;
+      }
+      save();p.innerHTML='<div style="background:rgba(64,145,108,.1);padding:12px;border-radius:8px;color:#1B4332;font-size:13px"><strong>✅ '+added+' sumarios cargados</strong></div>';
+      setTimeout(function(){closeModal();render();toast("✅ "+added+" sumarios cargados")},1200);
+    }catch(err){p.innerHTML='<div style="background:rgba(188,71,73,.1);padding:12px;border-radius:8px;color:#BC4749;font-size:13px">❌ '+err.message+'</div>'}
+  };
+  r.readAsArrayBuffer(file);
+}
+
+// ══════ EXCEL UPLOAD: PROYECTOS ══════
+function openProjExcel(){
+  var h='<div class="mh"><h2>📂 Cargar Proyectos desde Excel</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<p style="font-size:13px;color:var(--txl);margin-bottom:14px;line-height:1.6">Sube un archivo Excel con proyectos. Columnas esperadas: <strong>Nombre, Unidad, Presupuesto, Avance%, Estado, Financiamiento, Urgencia</strong>. La primera fila debe ser el encabezado.</p>';
+  h+='<div class="fg"><label>Archivo Excel (.xls / .xlsx)</label><input class="fi" type="file" id="pxF" accept=".xls,.xlsx"></div>';
+  h+='<div id="pxP" style="margin-top:14px"></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="processProjExcel()">Cargar</button></div>';
+  openModal(h);
+}
+function processProjExcel(){
+  var file=document.getElementById("pxF").files[0];if(!file){alert("Selecciona un archivo");return}
+  var p=document.getElementById("pxP");p.innerHTML='<p style="color:var(--txl);font-size:13px">⏳ Procesando...</p>';
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""});
+      var added=0;
+      for(var i=1;i<rows.length;i++){
+        var r=rows[i];if(!r[0])continue;
+        var st=String(r[4]||"ejecucion").toLowerCase().replace(/ /g,"_").replace("ó","o");
+        if(["pendiente","diseno","licitacion","ejecucion","completado"].indexOf(st)<0)st="ejecucion";
+        var ur=String(r[6]||"media").toLowerCase();
+        if(["alta","media","baja"].indexOf(ur)<0)ur="media";
+        D.projects.push({id:nid(),name:String(r[0]||""),unit:String(r[1]||""),budget:String(r[2]||""),progress:parseInt(r[3])||0,status:st,financiamiento:String(r[5]||""),urgencia:ur});
+        added++;
+      }
+      save();p.innerHTML='<div style="background:rgba(64,145,108,.1);padding:12px;border-radius:8px;color:#1B4332;font-size:13px"><strong>✅ '+added+' proyectos cargados</strong></div>';
+      setTimeout(function(){closeModal();render();toast("✅ "+added+" proyectos cargados")},1200);
+    }catch(err){p.innerHTML='<div style="background:rgba(188,71,73,.1);padding:12px;border-radius:8px;color:#BC4749;font-size:13px">❌ '+err.message+'</div>'}
+  };
+  r.readAsArrayBuffer(file);
+}
+
+
+// ══════ BITÁCORA / LOG ══════
+function logAction(accion,detalle,seccion){
+  if(!D.bitacora)D.bitacora=[];
+  D.bitacora.unshift({id:nid(),fecha:new Date().toISOString(),accion:accion,detalle:detalle,seccion:seccion});
+  if(D.bitacora.length>500)D.bitacora=D.bitacora.slice(0,500);
+}
+function rBitacora(){
+  if(!D.bitacora)D.bitacora=[];
+  var el=document.getElementById("sc");
+  var h='<p style="font-size:14px;color:var(--txl);margin-bottom:20px;line-height:1.6">Registro automático de acciones realizadas en el panel. Útil para trazabilidad administrativa de decisiones y cambios.</p>';
+  // Filter bar
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:rgba(254,250,224,.5);border-radius:10px;align-items:center"><span style="font-size:12px;font-weight:600;color:var(--txl)">🔍 Filtrar:</span>';
+  h+='<input class="fi" type="text" id="bSearch" placeholder="Buscar en bitácora..." oninput="filterBitacora(this.value)" style="flex:1;min-width:200px;padding:6px 12px">';
+  h+='<button class="bs" onclick="if(confirm(\'¿Vaciar toda la bitácora?\')){D.bitacora=[];save();render();toast(\'Bitácora vaciada\')}">🗑 Vaciar</button></div>';
+  h+='<div class="cd" id="bList"></div>';
+  el.innerHTML=h;
+  filterBitacora("");
+}
+function filterBitacora(q){
+  var list=document.getElementById("bList");if(!list)return;
+  q=(q||"").trim().toLowerCase();
+  var filtered=D.bitacora.filter(function(b){if(!q)return true;return(b.accion+" "+b.detalle+" "+b.seccion).toLowerCase().indexOf(q)>=0});
+  if(filtered.length===0){list.innerHTML='<div style="padding:40px;text-align:center;color:var(--txl)"><div style="font-size:36px;margin-bottom:8px">📋</div><p style="font-size:14px">'+(D.bitacora.length===0?"Sin registros aún. Las acciones que realices aparecerán aquí.":"Sin resultados para la búsqueda.")+'</p></div>';return}
+  var h='';var lastDate="";
+  var secColors={oficios:"#3A86A8",sumarios:"#9D4EDD",macroprocesos:"#BC4749",proyectos:"#40916C",unidades:"#D4A373"};
+  filtered.forEach(function(b){
+    var d=new Date(b.fecha);
+    var dateStr=d.toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    var timeStr=d.toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"});
+    if(dateStr!==lastDate){lastDate=dateStr;h+='<div style="font-size:11px;font-weight:700;color:var(--txl);text-transform:uppercase;letter-spacing:.6px;padding:12px 16px 6px;border-bottom:1px solid rgba(212,212,170,.2)">'+dateStr+'</div>'}
+    var col=secColors[b.seccion]||"#52796F";
+    h+='<div style="display:flex;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(212,212,170,.1);align-items:flex-start"><div style="min-width:3px;background:'+col+';align-self:stretch;border-radius:2px"></div>';
+    h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+b.accion+'</div><div style="font-size:11px;color:var(--txl);margin-top:2px">'+b.detalle+'</div></div>';
+    h+='<div style="font-size:11px;color:var(--txl);white-space:nowrap">'+timeStr+'</div></div>';
+  });
+  list.innerHTML=h;
+}
+
+// ══════ CALENDARIO UNIFICADO ══════
+var calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
+function rCalendario(){
+  var el=document.getElementById("sc");
+  var months=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  // Collect all dated events
+  var events={};
+  var addEv=function(date,tipo,titulo,color,sec){if(!date)return;if(!events[date])events[date]=[];events[date].push({tipo:tipo,titulo:titulo,color:color,sec:sec})};
+  (D.oficios||[]).forEach(function(o){if(o.status!=="respondido"&&o.status!=="completado")addEv(o.fechaLimite,"Oficio",o.nOficio,"#3A86A8","oficios")});
+  (D.sumarios||[]).forEach(function(s){if(s.status!=="cerrado"&&s.status!=="sobreseido"){var lim=addDays(s.fechaDecreto,s.plazoBase);addEv(lim,"Sumario",s.decreto,"#9D4EDD","sumarios")}});
+  (D.compliance||[]).forEach(function(c){if(c.status!=="completado")addEv(c.deadline,"Compliance",c.title,"#40916C","compliance")});
+  (D.tasks||[]).forEach(function(t){if(!t.done)addEv(t.date,"Agenda",t.title,"#D4A373","tareas")});
+  (D.macroprocesos||[]).forEach(function(mp){mp.etapas.forEach(function(e){if(e.status!=="completado")addEv(e.plazo,"Macro",mp.nombre+" → "+e.nombre,mp.color,"macroprocesos")})});
+  var h='<p style="font-size:14px;color:var(--txl);margin-bottom:20px;line-height:1.6">Vista unificada de todos los plazos: oficios, sumarios, agenda, compliance y etapas de macroprocesos.</p>';
+  // Nav
+  h+='<div class="cd mb24"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap"><button class="bs" onclick="calMonth--;if(calMonth<0){calMonth=11;calYear--}rCalendario()">◀</button>';
+  h+='<h3 style="flex:1;text-align:center;font-size:18px;font-weight:700;margin:0">'+months[calMonth]+' '+calYear+'</h3>';
+  h+='<button class="bs" onclick="calMonth++;if(calMonth>11){calMonth=0;calYear++}rCalendario()">▶</button>';
+  h+='<button class="bs" onclick="calMonth=new Date().getMonth();calYear=new Date().getFullYear();rCalendario()">Hoy</button></div>';
+  // Build grid
+  var first=new Date(calYear,calMonth,1);
+  var dayOfWeek=first.getDay();var startOffset=dayOfWeek===0?6:dayOfWeek-1;
+  var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  var todayStr=new Date().toISOString().slice(0,10);
+  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px">';
+  ["LUN","MAR","MIÉ","JUE","VIE","SÁB","DOM"].forEach(function(d){h+='<div style="text-align:center;font-weight:700;color:var(--txl);padding:6px 0">'+d+'</div>'});
+  for(var i=0;i<startOffset;i++)h+='<div style="min-height:90px;background:rgba(212,212,170,.05);border-radius:6px"></div>';
+  for(var d=1;d<=daysInMonth;d++){
+    var ds=calYear+"-"+String(calMonth+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    var dayEvents=events[ds]||[];
+    var isToday=ds===todayStr;
+    var bg=isToday?"rgba(64,145,108,.12)":"#fff";
+    var border=isToday?"2px solid #40916C":"1px solid rgba(212,212,170,.25)";
+    h+='<div style="min-height:90px;background:'+bg+';border:'+border+';border-radius:6px;padding:4px 6px;overflow:hidden">';
+    h+='<div style="font-size:12px;font-weight:'+(isToday?"700":"600")+';color:'+(isToday?"#40916C":"var(--tx)")+';margin-bottom:3px">'+d+'</div>';
+    dayEvents.slice(0,3).forEach(function(ev){
+      h+='<div title="'+ev.titulo.replace(/"/g,"&quot;")+'" onclick="sec=\''+ev.sec+'\';buildNav();render()" style="background:'+ev.color+';color:#fff;padding:2px 5px;border-radius:3px;font-size:9px;font-weight:600;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ev.titulo.substring(0,22)+'</div>';
+    });
+    if(dayEvents.length>3)h+='<div style="font-size:9px;color:var(--txl);font-weight:600">+'+(dayEvents.length-3)+' más</div>';
+    h+='</div>';
+  }
+  h+='</div></div>';
+  // Legend
+  h+='<div class="cd"><h4 style="margin:0 0 10px;font-size:13px;font-weight:600">Leyenda</h4><div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px">';
+  [{c:"#3A86A8",l:"Oficios Contraloría"},{c:"#9D4EDD",l:"Sumarios"},{c:"#40916C",l:"Compliance"},{c:"#D4A373",l:"Agenda"},{c:"#BC4749",l:"Macroprocesos"}].forEach(function(x){h+='<div style="display:flex;gap:6px;align-items:center"><span style="width:12px;height:12px;background:'+x.c+';border-radius:3px"></span>'+x.l+'</div>'});
+  h+='</div></div>';
+  el.innerHTML=h;
+}
+
+// ══════ ADJUNTOS PDF ══════
+function renderAdjuntos(item,type,idx){
+  var h='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--txl);margin-bottom:6px">📎 Adjuntos</div>';
+  if(item.adjuntos&&item.adjuntos.length>0){
+    item.adjuntos.forEach(function(a,ai){
+      var sz=(a.size/1024).toFixed(0);
+      h+='<div style="display:flex;gap:8px;align-items:center;padding:6px 10px;background:rgba(58,134,168,.08);border-radius:6px;margin-bottom:4px;font-size:11px"><span>📄</span><div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.nombre+' <span style="color:var(--txl)">('+sz+' KB)</span></div><button class="be" onclick="downloadAdjunto(\''+type+'\','+idx+','+ai+')">⬇</button><button class="bdel" onclick="deleteAdjunto(\''+type+'\','+idx+','+ai+')">🗑</button></div>';
+    });
+  }
+  h+='<div style="margin-top:6px"><input type="file" id="adjFile_'+type+'_'+idx+'" accept=".pdf,.doc,.docx" style="font-size:11px" onchange="addAdjunto(\''+type+'\','+idx+',this)"></div></div>';
+  return h;
+}
+function addAdjunto(type,idx,input){
+  var file=input.files[0];if(!file)return;
+  if(file.size>2*1024*1024){alert("Archivo muy grande (máx 2 MB)");input.value="";return}
+  var r=new FileReader();
+  r.onload=function(e){
+    var arr=type==="oficio"?D.oficios:D.sumarios;
+    if(!arr[idx].adjuntos)arr[idx].adjuntos=[];
+    arr[idx].adjuntos.push({nombre:file.name,size:file.size,data:e.target.result,fecha:new Date().toISOString()});
+    save();render();toast("✅ Adjunto guardado");
+  };
+  r.readAsDataURL(file);
+}
+function downloadAdjunto(type,idx,ai){
+  var arr=type==="oficio"?D.oficios:D.sumarios;
+  var a=arr[idx].adjuntos[ai];
+  var link=document.createElement("a");link.href=a.data;link.download=a.nombre;link.click();
+}
+function deleteAdjunto(type,idx,ai){
+  if(!confirm("¿Eliminar este adjunto?"))return;
+  var arr=type==="oficio"?D.oficios:D.sumarios;
+  arr[idx].adjuntos.splice(ai,1);save();render();toast("Adjunto eliminado");
+}
+
+
+// ══════ PROCESOS RELEVANTES ══════
+function rProcesosRel(){
+  if(!D.procesosRelevantes)D.procesosRelevantes=[];
+  var el=document.getElementById("sc");
+  var h='<p style="font-size:14px;color:var(--txl);margin-bottom:20px;line-height:1.6">Procesos relevantes que lleva la Administración Municipal durante el año. Agrega los que estés gestionando y haz seguimiento a sus etapas, plazos y estados.</p>';
+  h+='<div style="margin-bottom:20px;text-align:right"><button class="bp" onclick="addProcesoRel()">+ Nuevo Proceso</button></div>';
+  if(D.procesosRelevantes.length===0){
+    h+='<div class="cd" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:10px">📋</div><p style="font-size:14px;color:var(--txl);margin-bottom:6px">Aún no tienes procesos relevantes registrados.</p><p style="font-size:12px;color:var(--txl)">Haz clic en <strong>"+ Nuevo Proceso"</strong> para comenzar.</p></div>';
+    el.innerHTML=h;return;
+  }
+  D.procesosRelevantes.forEach(function(pr,pi){
+    var total=pr.etapas.length;
+    var done=pr.etapas.filter(function(e){return e.status==='completado'}).length;
+    var pct=total>0?Math.round(done/total*100):0;
+    var overdue=pr.etapas.filter(function(e){return e.status!=='completado'&&daysLeft(e.plazo)<0}).length;
+    h+='<div class="cd mb24" style="border-left:4px solid '+pr.color+'">';
+    h+='<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap"><div style="width:44px;height:44px;border-radius:50%;background:'+pr.color+'15;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="'+pr.color+'" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1"/></svg></div>';
+    h+='<div style="flex:1"><div style="font-size:17px;font-weight:700">'+pr.nombre+'</div><div style="font-size:12px;color:var(--txl);margin-top:2px">'+(pr.desc||'').substring(0,150)+(pr.desc&&pr.desc.length>150?'...':'')+'</div></div>';
+    h+='<div style="text-align:center;min-width:70px"><div style="font-size:22px;font-weight:700;color:'+pr.color+'">'+pct+'%</div><div style="font-size:10px;color:var(--txl)">'+done+'/'+total+' etapas</div></div>';
+    h+='<button class="be" onclick="editProcesoRel('+pi+')" title="Editar proceso">✏️</button>';
+    h+='<button class="bdel" onclick="delProcesoRel('+pi+')" title="Eliminar proceso">🗑</button></div>';
+    h+='<div style="height:8px;background:#eee;border-radius:4px;margin-bottom:14px"><div style="width:'+pct+'%;height:100%;background:'+pr.color+';border-radius:4px;transition:width .3s"></div></div>';
+    if(overdue>0)h+='<div style="background:rgba(188,71,73,.08);border-left:3px solid #BC4749;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#BC4749;font-weight:600">⚠️ '+overdue+' etapa'+(overdue>1?'s':'')+' con plazo vencido</div>';
+    h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:'+pr.color+'10"><th style="padding:8px 12px;text-align:left">Etapa</th><th style="padding:8px 12px;text-align:center;width:100px">Plazo</th><th style="padding:8px 12px;text-align:center;width:80px">Días</th><th style="padding:8px 12px;text-align:center;width:120px">Estado</th><th style="padding:8px 12px;text-align:left">Observaciones</th><th style="padding:8px 12px;width:50px"></th></tr></thead><tbody>';
+    pr.etapas.forEach(function(et,ei){
+      var dl=daysLeft(et.plazo);var isDone=et.status==='completado';var dc2=isDone?'ok':daysClass(dl);
+      h+='<tr style="border-bottom:1px solid rgba(212,212,170,.2);'+(isDone?'opacity:.55':'')+'"><td style="padding:8px 12px;font-weight:500">'+et.nombre+'</td>';
+      h+='<td style="padding:8px 12px;text-align:center;font-size:11px">'+(et.plazo?fd(et.plazo):'—')+'</td>';
+      h+='<td style="padding:8px 12px;text-align:center"><span class="notif-days '+dc2+'" style="font-size:10px">'+(isDone?'✓':(et.plazo?daysLabel(dl):'—'))+'</span></td>';
+      h+='<td style="padding:8px 12px;text-align:center">'+bd(et.status)+'</td>';
+      h+='<td style="padding:8px 12px;font-size:11px;color:var(--txl);font-style:italic">'+(et.obs||'—')+'</td>';
+      h+='<td style="padding:8px 12px;white-space:nowrap"><button class="be" onclick="editPrEtapa('+pi+','+ei+')" title="Editar">✏️</button><button class="bdel" onclick="delPrEtapa('+pi+','+ei+')" title="Eliminar">🗑</button></td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="unit-notes-label" style="margin-top:12px">📝 Notas generales del proceso:</div>';
+    h+='<textarea class="unit-notes" data-pr="'+pi+'" onchange="savePrNote(this)">'+((pr.notas||'').replace(/</g,'&lt;'))+'</textarea>';
+    h+='<div style="margin-top:8px;text-align:right"><button class="bs" onclick="addPrEtapa('+pi+')">+ Agregar etapa</button></div>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+function savePrNote(el){var i=parseInt(el.getAttribute('data-pr'));D.procesosRelevantes[i].notas=el.value;save();toast('Nota guardada')}
+function addProcesoRel(){
+  var h='<div class="mh"><h2>➕ Nuevo Proceso Relevante</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Nombre del proceso</label><input class="fi" id="prN" placeholder="Ej: Implementación nueva ordenanza ambiental"></div>';
+  h+='<div class="fg"><label>Descripción</label><textarea class="fi" id="prD" style="min-height:60px;resize:vertical;font-family:inherit" placeholder="Describe brevemente el proceso y su contexto..."></textarea></div>';
+  h+='<div class="fg"><label>Color identificador</label><select class="fi" id="prC"><option value="#06A77D">Verde Esmeralda</option><option value="#3A86A8">Azul</option><option value="#D4A373">Dorado</option><option value="#9D4EDD">Púrpura</option><option value="#BC4749">Rojo</option><option value="#FB8500">Naranja</option><option value="#52796F">Verde Musgo</option><option value="#C9A227">Amarillo</option></select></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveNewProcesoRel()">Crear</button></div>';
+  openModal(h);
+}
+function saveNewProcesoRel(){
+  var nombre=document.getElementById('prN').value.trim();
+  if(!nombre){alert('El nombre es obligatorio');return}
+  D.procesosRelevantes.push({id:nid(),nombre:nombre,desc:document.getElementById('prD').value,color:document.getElementById('prC').value,etapas:[],notas:''});
+  logAction('Proceso relevante creado',nombre,'procesosrel');
+  save();closeModal();render();toast('✅ Proceso creado');
+}
+function editProcesoRel(pi){
+  var pr=D.procesosRelevantes[pi];
+  var h='<div class="mh"><h2>Editar Proceso</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Nombre</label><input class="fi" id="prN" value="'+pr.nombre.replace(/"/g,'&quot;')+'"></div>';
+  h+='<div class="fg"><label>Descripción</label><textarea class="fi" id="prD" style="min-height:60px;resize:vertical;font-family:inherit">'+(pr.desc||'').replace(/</g,'&lt;')+'</textarea></div>';
+  h+='<div class="fg"><label>Color</label><select class="fi" id="prC">';
+  var colors=[['#06A77D','Verde Esmeralda'],['#3A86A8','Azul'],['#D4A373','Dorado'],['#9D4EDD','Púrpura'],['#BC4749','Rojo'],['#FB8500','Naranja'],['#52796F','Verde Musgo'],['#C9A227','Amarillo']];
+  colors.forEach(function(x){h+='<option value="'+x[0]+'"'+(pr.color===x[0]?' selected':'')+'>'+x[1]+'</option>'});
+  h+='</select></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveProcesoRel('+pi+')">Guardar</button></div>';
+  openModal(h);
+}
+function saveProcesoRel(pi){
+  D.procesosRelevantes[pi].nombre=document.getElementById('prN').value;
+  D.procesosRelevantes[pi].desc=document.getElementById('prD').value;
+  D.procesosRelevantes[pi].color=document.getElementById('prC').value;
+  save();closeModal();render();toast('Proceso actualizado');
+}
+function delProcesoRel(pi){
+  if(!confirm('¿Eliminar este proceso relevante y todas sus etapas?'))return;
+  D.procesosRelevantes.splice(pi,1);save();render();toast('Proceso eliminado');
+}
+function editPrEtapa(pi,ei){
+  var et=D.procesosRelevantes[pi].etapas[ei];
+  var h='<div class="mh"><h2>Editar Etapa</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Nombre</label><input class="fi" id="prEN" value="'+et.nombre.replace(/"/g,'&quot;')+'"></div>';
+  h+='<div class="fr"><div class="fg"><label>Plazo</label><input class="fi" type="date" id="prEP" value="'+(et.plazo||'')+'"></div><div class="fg"><label>Estado</label><select class="fi" id="prES">';
+  Object.keys(MACRO_ST).forEach(function(k){h+='<option value="'+k+'"'+(et.status===k?' selected':'')+'>'+MACRO_ST[k]+'</option>'});
+  h+='</select></div></div>';
+  h+='<div class="fg"><label>Observaciones</label><textarea class="fi" id="prEO" style="min-height:60px;resize:vertical;font-family:inherit">'+(et.obs||'').replace(/</g,'&lt;')+'</textarea></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="savePrEtapa('+pi+','+ei+')">Guardar</button></div>';
+  openModal(h);
+}
+function savePrEtapa(pi,ei){
+  var e=D.procesosRelevantes[pi].etapas[ei];
+  e.nombre=document.getElementById('prEN').value;
+  e.plazo=document.getElementById('prEP').value;
+  e.status=document.getElementById('prES').value;
+  e.obs=document.getElementById('prEO').value;
+  save();closeModal();render();toast('Etapa actualizada');
+}
+function delPrEtapa(pi,ei){
+  if(!confirm('¿Eliminar esta etapa?'))return;
+  D.procesosRelevantes[pi].etapas.splice(ei,1);save();render();toast('Etapa eliminada');
+}
+function addPrEtapa(pi){
+  var h='<div class="mh"><h2>Agregar Etapa</h2><button class="mx" onclick="closeModal()">✕</button></div>';
+  h+='<div class="fg"><label>Nombre</label><input class="fi" id="prEN"></div>';
+  h+='<div class="fr"><div class="fg"><label>Plazo</label><input class="fi" type="date" id="prEP"></div><div class="fg"><label>Estado</label><select class="fi" id="prES"><option value="pendiente" selected>Pendiente</option><option value="en_progreso">En Progreso</option><option value="completado">Completado</option><option value="bloqueado">Bloqueado</option></select></div></div>';
+  h+='<div class="fg"><label>Observaciones</label><textarea class="fi" id="prEO" style="min-height:60px;resize:vertical;font-family:inherit"></textarea></div>';
+  h+='<div class="mf"><button class="bs" onclick="closeModal()">Cancelar</button><button class="bp" onclick="saveNewPrEtapa('+pi+')">Agregar</button></div>';
+  openModal(h);
+}
+function saveNewPrEtapa(pi){
+  D.procesosRelevantes[pi].etapas.push({id:nid(),nombre:document.getElementById('prEN').value,plazo:document.getElementById('prEP').value,status:document.getElementById('prES').value,obs:document.getElementById('prEO').value});
+  save();closeModal();render();toast('Etapa agregada');
+}
+
+// ══════ VISTA HOY ══════
+function rHoy(){
+  var el=document.getElementById("sc");
+  var today=new Date().toISOString().slice(0,10);
+  var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);var we=weekEnd.toISOString().slice(0,10);
+  // Collect urgent items
+  var ofiUrg=(D.oficios||[]).filter(function(o){return o.status!=="respondido"&&o.status!=="completado"&&o.fechaLimite<=we}).map(function(o){return{tipo:"oficio",titulo:o.nOficio+" — "+o.materia,sub:"Resp: "+o.responsable,fecha:o.fechaLimite,dl:daysLeft(o.fechaLimite),sec:"oficios"}});
+  var sumUrg=(D.sumarios||[]).filter(function(s){var lim=addDays(s.fechaDecreto,s.plazoBase);return s.status!=="cerrado"&&s.status!=="sobreseido"&&lim<=we}).map(function(s){var lim=addDays(s.fechaDecreto,s.plazoBase);return{tipo:"sumario",titulo:s.decreto+" — "+s.materia,sub:"Fiscal: "+s.fiscal,fecha:lim,dl:daysLeft(lim),sec:"sumarios"}});
+  var macUrg=[];(D.macroprocesos||[]).forEach(function(mp){mp.etapas.forEach(function(e){if(e.status!=="completado"&&e.plazo<=we)macUrg.push({tipo:"macroproceso",titulo:mp.nombre+" → "+e.nombre,sub:"Etapa del proceso",fecha:e.plazo,dl:daysLeft(e.plazo),sec:"macroprocesos"})})});
+  var tskAlta=[];(D.units||[]).forEach(function(u){if(!u.taskList)return;u.taskList.forEach(function(t){if(!t.done&&t.pri==="alta")tskAlta.push({tipo:"tarea",titulo:t.title,sub:"Unidad: "+u.name,fecha:"",dl:999,sec:"unidades"})})});
+  var cmpUrg=(D.compliance||[]).filter(function(c){return c.status!=="completado"&&c.deadline<=we}).map(function(c){return{tipo:"compliance",titulo:c.title,sub:c.entity,fecha:c.deadline,dl:daysLeft(c.deadline),sec:"compliance"}});
+  var tskAgenda=(D.tasks||[]).filter(function(t){return!t.done&&t.date<=we}).map(function(t){return{tipo:"agenda",titulo:t.title,sub:"Categoría: "+(t.cat||"-"),fecha:t.date,dl:daysLeft(t.date),sec:"tareas"}});
+  var prUrg=[];(D.procesosRelevantes||[]).forEach(function(pr){pr.etapas.forEach(function(e){if(e.status!=="completado"&&e.plazo&&e.plazo<=we)prUrg.push({tipo:"proceso",titulo:pr.nombre+" → "+e.nombre,sub:"Proceso relevante",fecha:e.plazo,dl:daysLeft(e.plazo),sec:"procesosrel"})})});
+  var allUrg=ofiUrg.concat(sumUrg,macUrg,cmpUrg,tskAgenda,prUrg).sort(function(a,b){return a.dl-b.dl});
+  var vencidos=allUrg.filter(function(x){return x.dl<0});
+  var hoy=allUrg.filter(function(x){return x.dl===0});
+  var semana=allUrg.filter(function(x){return x.dl>0&&x.dl<=7});
+  var h="";
+  // Hero greeting
+  var hr=new Date().getHours();var saludo=hr<12?"Buenos días":hr<19?"Buenas tardes":"Buenas noches";
+  h+='<div style="background:linear-gradient(135deg,#1B4332,#2D6A4F);color:#fff;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 6px 20px rgba(27,67,50,.2)"><div style="font-size:13px;opacity:.85;margin-bottom:4px">'+saludo+', Jano</div><div style="font-size:22px;font-weight:700;margin-bottom:6px">'+new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"})+'</div><div style="font-size:13px;opacity:.9">Tienes '+vencidos.length+' asunto(s) vencido(s), '+hoy.length+' para hoy y '+semana.length+' esta semana.</div></div>';
+  // Cards
+  h+='<div class="g g4 mb24">';
+  [{l:"Vencidos",v:vencidos.length,c:"#BC4749",i:"🚨"},{l:"Hoy",v:hoy.length,c:"#DDA15E",i:"⏰"},{l:"Esta Semana",v:semana.length,c:"#3A86A8",i:"📅"},{l:"Tareas Alta Prioridad",v:tskAlta.length,c:"#9D4EDD",i:"🎯"}].forEach(function(s){
+    h+='<div class="cd cds" style="display:flex;align-items:center;gap:14px"><div style="width:44px;height:44px;border-radius:12px;background:'+s.c+'18;display:flex;align-items:center;justify-content:center;font-size:22px">'+s.i+'</div><div><div style="font-size:26px;font-weight:700;color:'+s.c+'">'+s.v+'</div><div style="font-size:11px;color:var(--txl)">'+s.l+'</div></div></div>';
+  });
+  h+='</div>';
+  // Agenda section
+  h+='<div class="cd mb24"><h3 style="font-size:15px;font-weight:600;margin-bottom:14px">📋 Tu agenda de esta semana</h3>';
+  if(allUrg.length===0){h+='<p style="text-align:center;color:var(--txl);padding:30px;font-size:13px">✨ No tienes asuntos urgentes esta semana. ¡Buen trabajo!</p>';}
+  else{
+    var sections=[{key:"vencidos",items:vencidos,title:"🚨 VENCIDOS",color:"#BC4749"},{key:"hoy",items:hoy,title:"⏰ PARA HOY",color:"#DDA15E"},{key:"semana",items:semana,title:"📅 ESTA SEMANA",color:"#3A86A8"}];
+    sections.forEach(function(sc){
+      if(sc.items.length===0)return;
+      h+='<div style="font-size:11px;font-weight:700;color:'+sc.color+';letter-spacing:.8px;margin:14px 0 8px;text-transform:uppercase">'+sc.title+' · '+sc.items.length+'</div>';
+      sc.items.forEach(function(x){
+        var tipoColor={oficio:"#3A86A8",sumario:"#9D4EDD",macroproceso:"#BC4749",compliance:"#40916C",agenda:"#D4A373",proceso:"#06A77D"};
+        h+='<div style="display:flex;gap:12px;padding:10px 12px;border-radius:8px;background:rgba(212,212,170,.08);margin-bottom:6px;align-items:center;cursor:pointer" onclick="sec=\''+x.sec+'\';buildNav();render()">';
+        h+='<span style="background:'+tipoColor[x.tipo]+';color:#fff;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase">'+x.tipo+'</span>';
+        h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+x.titulo+'</div><div style="font-size:11px;color:var(--txl)">'+x.sub+(x.fecha?' · '+fd(x.fecha):"")+'</div></div>';
+        h+='<span style="font-size:11px;font-weight:700;color:'+sc.color+';white-space:nowrap">'+(x.dl<0?Math.abs(x.dl)+"d venc.":x.dl===0?"HOY":x.dl+"d")+'</span>';
+        h+='</div>';
+      });
+    });
+  }
+  h+='</div>';
+  // High priority tasks by unit
+  if(tskAlta.length>0){
+    h+='<div class="cd mb24"><h3 style="font-size:15px;font-weight:600;margin-bottom:14px">🎯 Tareas de alta prioridad por unidad</h3>';
+    tskAlta.slice(0,10).forEach(function(t){
+      h+='<div style="display:flex;gap:12px;padding:8px 12px;border-radius:8px;background:rgba(157,78,221,.06);margin-bottom:6px;align-items:center;cursor:pointer" onclick="sec=\'unidades\';buildNav();render()"><span class="pd pd-alta"></span><div style="flex:1"><div style="font-size:13px;font-weight:500">'+t.titulo+'</div><div style="font-size:11px;color:var(--txl)">'+t.sub+'</div></div></div>';
+    });
+    if(tskAlta.length>10)h+='<div style="text-align:center;font-size:11px;color:var(--txl);margin-top:8px">Y '+(tskAlta.length-10)+' tareas más...</div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+
+// ══════ BÚSQUEDA GLOBAL ══════
+function doGlobalSearch(q){
+  var r=document.getElementById("gsResults");if(!r)return;
+  q=(q||"").trim().toLowerCase();
+  if(q.length<2){r.style.display="none";return}
+  var results=[];
+  var add=function(tipo,titulo,sub,sec,color){results.push({tipo:tipo,titulo:titulo,sub:sub,sec:sec,color:color})};
+  (D.oficios||[]).forEach(function(o){if((o.nOficio+" "+o.materia+" "+o.responsable+" "+(o.obs||"")).toLowerCase().indexOf(q)>=0)add("Oficio",o.nOficio+" — "+o.materia,o.responsable,"oficios","#3A86A8")});
+  (D.sumarios||[]).forEach(function(s){if((s.decreto+" "+s.materia+" "+s.fiscal+" "+(s.obs||"")).toLowerCase().indexOf(q)>=0)add("Sumario",s.decreto+" — "+s.materia,"Fiscal: "+s.fiscal,"sumarios","#9D4EDD")});
+  (D.projects||[]).forEach(function(p){if((p.name+" "+p.unit+" "+(p.financiamiento||"")).toLowerCase().indexOf(q)>=0)add("Proyecto",p.name,p.unit+" · "+p.budget,"proyectos","#40916C")});
+  (D.mercado||[]).forEach(function(m){if(((m.oc||"")+" "+(m.nombre||m.prov||"")+" "+(m.tipo||"")).toLowerCase().indexOf(q)>=0)add("Licitación",(m.oc||"")+" — "+(m.nombre||m.prov||""),(m.estado||"")+" · "+(m.tipo||""),"contratacion","#D4A373")});
+  (D.units||[]).forEach(function(u){if(!u.taskList)return;u.taskList.forEach(function(t){if((t.title+" "+(t.obs||"")).toLowerCase().indexOf(q)>=0)add("Tarea",t.title,"Unidad: "+u.name,"unidades",u.color)})});
+  (D.macroprocesos||[]).forEach(function(mp){if(mp.nombre.toLowerCase().indexOf(q)>=0||mp.desc.toLowerCase().indexOf(q)>=0||(mp.notas||"").toLowerCase().indexOf(q)>=0)add("Macroproceso",mp.nombre,mp.desc.substring(0,60)+"...","macroprocesos",mp.color);mp.etapas.forEach(function(e){if((e.nombre+" "+(e.obs||"")).toLowerCase().indexOf(q)>=0)add("Etapa Macro",e.nombre,mp.nombre,"macroprocesos",mp.color)})});
+  (D.compliance||[]).forEach(function(c2){if((c2.title+" "+(c2.entity||"")).toLowerCase().indexOf(q)>=0)add("Compliance",c2.title,c2.entity,"compliance","#40916C")});
+  // Render results
+  if(results.length===0){r.innerHTML='<div style="padding:14px;text-align:center;color:var(--txl);font-size:13px">Sin resultados para "'+q+'"</div>';r.style.display="block";return}
+  var h='<div style="padding:8px 12px;font-size:10px;color:var(--txl);background:rgba(212,212,170,.15);border-bottom:1px solid rgba(212,212,170,.3);text-transform:uppercase;letter-spacing:.6px">'+results.length+' resultado(s)</div>';
+  results.slice(0,20).forEach(function(x){
+    h+='<div style="padding:10px 14px;border-bottom:1px solid rgba(212,212,170,.15);cursor:pointer;display:flex;gap:10px;align-items:flex-start" onmouseover="this.style.background=\'rgba(212,212,170,.1)\'" onmouseout="this.style.background=\'\'" onmousedown="sec=\''+x.sec+'\';buildNav();render();document.getElementById(\'globalSearch\').value=\'\';document.getElementById(\'gsResults\').style.display=\'none\'">';
+    h+='<span style="background:'+x.color+';color:#fff;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;flex-shrink:0;margin-top:2px">'+x.tipo+'</span>';
+    h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--tx)">'+x.titulo+'</div><div style="font-size:11px;color:var(--txl);margin-top:2px">'+x.sub+'</div></div></div>';
+  });
+  if(results.length>20)h+='<div style="padding:8px;text-align:center;font-size:11px;color:var(--txl)">Y '+(results.length-20)+' resultado(s) más...</div>';
+  r.innerHTML=h;r.style.display="block";
+}
+
+// ══════ EXPORT / IMPORT ══════
+function exportData(){
+  var payload={version:APP_VERSION,exportedAt:new Date().toISOString(),data:D};
+  var str=JSON.stringify(payload,null,2);var blob=new Blob([str],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="respaldo_llayllay_"+new Date().toISOString().slice(0,10)+".json";a.click();toast("✅ Respaldo exportado");
+}
+function importData(input){
+  var file=input.files[0];if(!file)return;
+  if(!confirm("¿Restaurar respaldo? Esta acción reemplazará todos los datos actuales.")){input.value="";return}
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var p=JSON.parse(e.target.result);
+      var imported=p.data||p;
+      if(!imported.units||!Array.isArray(imported.units))throw new Error("Archivo inválido");
+      D=imported;
+      // Ensure all current fields exist
+      if(!D.oficios)D.oficios=JSON.parse(JSON.stringify(DEF.oficios));
+      if(!D.sumarios)D.sumarios=JSON.parse(JSON.stringify(DEF.sumarios));
+      if(!D.trimestrales)D.trimestrales=[];
+      if(!D.macroprocesos)D.macroprocesos=JSON.parse(JSON.stringify(DEF.macroprocesos));
+      if(!D.procesosRelevantes)D.procesosRelevantes=JSON.parse(JSON.stringify(DEF.procesosRelevantes));
+      if(!D.bitacora)D.bitacora=[];
+      if(!D.budget.cuentas)D.budget.cuentas=DEF.budget.cuentas;
+      save();render();toast("✅ Respaldo restaurado");
+    }catch(err){alert("Error al importar: "+err.message)}
+    input.value="";
+  };
+  r.readAsText(file);
+}
+
+
+// ══════ MODO OSCURO ══════
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  var isDark=document.body.classList.contains("dark");
+  try{localStorage.setItem("mll_dark",isDark?"1":"0")}catch(e){}
+  var btn=document.getElementById("darkBtn");
+  if(btn)btn.innerHTML=isDark?"☀️ Modo claro":"🌙 Modo oscuro";
+  toast(isDark?"🌙 Modo oscuro activado":"☀️ Modo claro activado");
+}
+function loadDarkPref(){
+  try{if(localStorage.getItem("mll_dark")==="1"){document.body.classList.add("dark");var btn=document.getElementById("darkBtn");if(btn)btn.innerHTML="☀️ Modo claro"}}catch(e){}
+}
+
+// ══════ REPORTE EJECUTIVO IMPRIMIBLE ══════
+function generarReporte(){
+  var today=new Date().toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  var win=window.open("","_blank","width=900,height=700");
+  var css="body{font-family:'DM Sans',Arial,sans-serif;color:#1B4332;margin:30px;line-height:1.5}h1{color:#1B4332;border-bottom:3px solid #40916C;padding-bottom:10px;font-size:24px}h2{color:#40916C;border-bottom:1px solid #D4A373;padding-bottom:4px;margin-top:28px;font-size:17px}h3{color:#52796F;font-size:14px;margin-top:18px}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}th{background:#40916C;color:#fff;padding:6px 10px;text-align:left}td{padding:6px 10px;border-bottom:1px solid #eee}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}.box{background:#FAEDCD;padding:12px;border-radius:6px;text-align:center}.box .n{font-size:22px;font-weight:700;color:#40916C}.box .l{font-size:11px;color:#52796F;text-transform:uppercase}.alerta{background:#FCE4EC;color:#BC4749;padding:10px;border-radius:6px;border-left:4px solid #BC4749;margin:10px 0;font-size:12px}.footer{margin-top:30px;padding-top:15px;border-top:1px solid #D4A373;font-size:10px;color:#52796F;text-align:center}@media print{.noprint{display:none}}";
+  var html="<html><head><title>Reporte Ejecutivo — Administración Municipal Llay-Llay</title><meta charset='utf-8'><style>"+css+"</style></head><body>";
+  html+="<div class='noprint' style='text-align:right;margin-bottom:10px'><button onclick='window.print()' style='padding:8px 16px;background:#40916C;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600'>🖨 Imprimir / Guardar PDF</button></div>";
+  html+="<h1>📋 Reporte Ejecutivo de Gestión</h1>";
+  html+="<p><strong>Administración Municipal de Llay-Llay</strong><br>Administrador: Sr. Jano<br>Fecha: "+today+"</p>";
+  // Resumen
+  var ofiPend=(D.oficios||[]).filter(function(o){return o.status!=='respondido'&&o.status!=='completado'}).length;
+  var ofiVenc=(D.oficios||[]).filter(function(o){return o.status!=='respondido'&&o.status!=='completado'&&daysLeft(o.fechaLimite)<0}).length;
+  var sumAct=(D.sumarios||[]).filter(function(s){return s.status!=='cerrado'&&s.status!=='sobreseido'}).length;
+  var projEj=(D.projects||[]).filter(function(p){return p.status==='ejecucion'}).length;
+  html+="<h2>1. Indicadores Clave</h2><div class='summary'><div class='box'><div class='n'>"+ofiPend+"</div><div class='l'>Oficios Pendientes</div></div><div class='box'><div class='n'>"+ofiVenc+"</div><div class='l'>Oficios Vencidos</div></div><div class='box'><div class='n'>"+sumAct+"</div><div class='l'>Sumarios Activos</div></div><div class='box'><div class='n'>"+projEj+"</div><div class='l'>Proyectos en Ejecución</div></div></div>";
+  if(ofiVenc>0)html+="<div class='alerta'>⚠️ Existen "+ofiVenc+" oficios con plazo vencido. Requieren atención inmediata conforme Art. 160-161 Ley 10.336.</div>";
+  // Oficios
+  if(D.oficios&&D.oficios.length>0){
+    html+="<h2>2. Oficios de Contraloría</h2><table><thead><tr><th>N° Oficio</th><th>Materia</th><th>Responsable</th><th>Plazo</th><th>Estado</th></tr></thead><tbody>";
+    D.oficios.filter(function(o){return o.status!=='respondido'&&o.status!=='completado'}).forEach(function(o){html+="<tr><td>"+o.nOficio+"</td><td>"+o.materia+"</td><td>"+o.responsable+"</td><td>"+o.fechaLimite+"</td><td>"+o.status+"</td></tr>"});
+    html+="</tbody></table>";
+  }
+  // Sumarios
+  if(D.sumarios&&D.sumarios.length>0){
+    html+="<h2>3. Sumarios e Investigaciones</h2><table><thead><tr><th>Tipo</th><th>Decreto</th><th>Materia</th><th>Fiscal</th><th>Estado</th></tr></thead><tbody>";
+    D.sumarios.filter(function(s){return s.status!=='cerrado'&&s.status!=='sobreseido'}).forEach(function(s){html+="<tr><td>"+(s.tipo==='sumario'?'Sumario':'Investigación')+"</td><td>"+s.decreto+"</td><td>"+s.materia+"</td><td>"+s.fiscal+"</td><td>"+s.status+"</td></tr>"});
+    html+="</tbody></table>";
+  }
+  // Presupuesto cuentas
+  if(D.budget&&D.budget.cuentas){
+    var cu=D.budget.cuentas;
+    html+="<h2>4. Ejecución Presupuestaria por Cuenta</h2><table><thead><tr><th>Cuenta</th><th>Vigente</th><th>Pagado</th><th>% Ejecución</th></tr></thead><tbody>";
+    html+="<tr><td>21 Personal</td><td>$"+formatMM(cu.c21.vigente)+" MM</td><td>$"+formatMM(cu.c21.pagado)+" MM</td><td>"+(cu.c21.pagado/cu.c21.vigente*100).toFixed(1)+"%</td></tr>";
+    html+="<tr><td>22 Bienes y Servicios</td><td>$"+formatMM(cu.c22.vigente)+" MM</td><td>$"+formatMM(cu.c22.pagado)+" MM</td><td>"+(cu.c22.pagado/cu.c22.vigente*100).toFixed(1)+"%</td></tr>";
+    html+="<tr><td>24 Transferencias</td><td>$"+formatMM(cu.c24.vigente)+" MM</td><td>$"+formatMM(cu.c24.pagado)+" MM</td><td>"+(cu.c24.pagado/cu.c24.vigente*100).toFixed(1)+"%</td></tr>";
+    html+="</tbody></table>";
+  }
+  // Macroprocesos
+  if(D.macroprocesos&&D.macroprocesos.length>0){
+    html+="<h2>5. Macroprocesos Estratégicos 2026</h2>";
+    D.macroprocesos.forEach(function(mp){
+      var done=mp.etapas.filter(function(e){return e.status==='completado'}).length;
+      var pct=mp.etapas.length>0?Math.round(done/mp.etapas.length*100):0;
+      html+="<h3>"+mp.nombre+" — "+pct+"% completado ("+done+"/"+mp.etapas.length+" etapas)</h3>";
+    });
+  }
+  // Proyectos
+  if(D.projects&&D.projects.length>0){
+    html+="<h2>6. Cartera de Proyectos</h2><table><thead><tr><th>Proyecto</th><th>Unidad</th><th>Presupuesto</th><th>Avance</th><th>Financiamiento</th></tr></thead><tbody>";
+    D.projects.forEach(function(p){html+="<tr><td>"+p.name+"</td><td>"+p.unit+"</td><td>"+p.budget+"</td><td>"+p.progress+"%</td><td>"+(p.financiamiento||'-')+"</td></tr>"});
+    html+="</tbody></table>";
+  }
+  html+="<div class='footer'>Documento generado automáticamente por el Panel de Administración Municipal — "+APP_VERSION+"<br>Ilustre Municipalidad de Llay-Llay · Región de Valparaíso</div>";
+  html+="</body></html>";
+  win.document.write(html);win.document.close();
+}
+
+
+// ══════ GOOGLE DRIVE SYNC ══════
+// IMPORTANTE: Reemplaza estos valores con tus credenciales de Google Cloud Console
+var GAPI_CLIENT_ID="1007777115422-m012pqlaluphdf14bvdipcm9et0e5v1r.apps.googleusercontent.com";
+var GAPI_API_KEY="AIzaSyA-r7sIBklSg_phN6Lpq6wUiA_LEUtgBOs";
+var GAPI_SCOPES="https://www.googleapis.com/auth/drive.file";
+var GAPI_DISCOVERY="https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
+var DRIVE_FILENAME="panel_llayllay_data.json";
+var DRIVE_FOLDER_NAME="Panel_AdminMunicipal_LlayLlay";
+
+var gdState={ready:false,authed:false,folderId:null,fileId:null,lastSync:null,tokenClient:null,syncing:false,autoSyncInterval:null};
+
+function gdriveLog(msg){var s=document.getElementById("gdriveStatus");if(s){s.textContent=msg;s.style.display="block"}console.log("[Drive]",msg)}
+
+function gdriveInit(){
+  if(GAPI_CLIENT_ID.indexOf("TU_CLIENT_ID")===0){gdriveLog("⚠️ Configurar credenciales");return}
+  try{
+    gapi.load("client",function(){
+      gapi.client.init({apiKey:GAPI_API_KEY,discoveryDocs:[GAPI_DISCOVERY]}).then(function(){
+        gdState.tokenClient=google.accounts.oauth2.initTokenClient({client_id:GAPI_CLIENT_ID,scope:GAPI_SCOPES,callback:gdriveOnAuth});
+        gdState.ready=true;gdriveLog("☁️ Drive listo — haz clic para conectar");
+        // Auto-connect if previously authed
+        var saved=localStorage.getItem("gdrive_token");
+        if(saved){try{var t=JSON.parse(saved);if(t.expires>Date.now()){gapi.client.setToken(t);gdState.authed=true;gdriveAfterAuth()}}catch(e){}}
+      });
+    });
+  }catch(e){gdriveLog("❌ Error inicializando: "+e.message)}
+}
+
+function gdriveConnect(){
+  if(!gdState.ready){gdriveLog("⚠️ Aún no listo, espera un momento...");setTimeout(gdriveInit,500);return}
+  if(gdState.authed){if(confirm("¿Desconectar Google Drive? Los datos locales se mantienen."))gdriveDisconnect();return}
+  gdState.tokenClient.requestAccessToken({prompt:"consent"});
+}
+
+function gdriveDisconnect(){
+  gdState.authed=false;gdState.fileId=null;gdState.folderId=null;
+  localStorage.removeItem("gdrive_token");
+  if(gdState.autoSyncInterval){clearInterval(gdState.autoSyncInterval);gdState.autoSyncInterval=null}
+  document.getElementById("gdriveBtn").innerHTML="☁️ Conectar Drive";
+  document.getElementById("gdriveSyncBtn").style.display="none";
+  gdriveLog("Desconectado");toast("Drive desconectado");
+}
+
+function gdriveOnAuth(resp){
+  if(resp.error){gdriveLog("❌ Error auth: "+resp.error);return}
+  gdState.authed=true;
+  // Save token with expiry
+  var token=gapi.client.getToken();
+  if(token){localStorage.setItem("gdrive_token",JSON.stringify({access_token:token.access_token,expires:Date.now()+3500000}))}
+  gdriveAfterAuth();
+}
+
+function gdriveAfterAuth(){
+  document.getElementById("gdriveBtn").innerHTML="✅ Drive conectado";
+  document.getElementById("gdriveSyncBtn").style.display="block";
+  gdriveLog("🔍 Buscando carpeta...");
+  gdriveFindOrCreateFolder().then(function(){
+    return gdriveFindOrCreateFile();
+  }).then(function(){
+    gdriveLog("✅ Listo. Sincronizando...");
+    return gdriveSyncNow();
+  }).then(function(){
+    // Auto-sync every 60 seconds
+    if(gdState.autoSyncInterval)clearInterval(gdState.autoSyncInterval);
+    gdState.autoSyncInterval=setInterval(function(){if(gdState.authed&&!gdState.syncing)gdriveSyncNow()},60000);
+  }).catch(function(e){gdriveLog("❌ "+e.message)});
+}
+
+function gdriveFindOrCreateFolder(){
+  return gapi.client.drive.files.list({q:"name='"+DRIVE_FOLDER_NAME+"' and mimeType='application/vnd.google-apps.folder' and trashed=false",fields:"files(id,name)"}).then(function(r){
+    if(r.result.files.length>0){gdState.folderId=r.result.files[0].id;return gdState.folderId}
+    return gapi.client.drive.files.create({resource:{name:DRIVE_FOLDER_NAME,mimeType:"application/vnd.google-apps.folder"},fields:"id"}).then(function(r2){gdState.folderId=r2.result.id;return gdState.folderId});
+  });
+}
+
+function gdriveFindOrCreateFile(){
+  return gapi.client.drive.files.list({q:"name='"+DRIVE_FILENAME+"' and '"+gdState.folderId+"' in parents and trashed=false",fields:"files(id,name,modifiedTime)"}).then(function(r){
+    if(r.result.files.length>0){gdState.fileId=r.result.files[0].id;return gdState.fileId}
+    // Create empty file
+    var metadata={name:DRIVE_FILENAME,parents:[gdState.folderId],mimeType:"application/json"};
+    var boundary="-------314159265358979323846";
+    var body="--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(metadata)+"\r\n--"+boundary+"\r\nContent-Type: application/json\r\n\r\n"+JSON.stringify({data:D,version:APP_VERSION,updatedAt:new Date().toISOString()})+"\r\n--"+boundary+"--";
+    return gapi.client.request({path:"/upload/drive/v3/files",method:"POST",params:{uploadType:"multipart",fields:"id"},headers:{"Content-Type":"multipart/related; boundary="+boundary},body:body}).then(function(r2){gdState.fileId=r2.result.id;return gdState.fileId});
+  });
+}
+
+function gdriveSyncNow(){
+  if(!gdState.authed||!gdState.fileId||gdState.syncing)return Promise.resolve();
+  gdState.syncing=true;
+  gdriveLog("🔄 Sincronizando...");
+  // Download remote, compare timestamps, merge or push
+  return gapi.client.drive.files.get({fileId:gdState.fileId,alt:"media"}).then(function(r){
+    var remote;try{remote=typeof r.result==="string"?JSON.parse(r.result):r.result}catch(e){remote=null}
+    var localTime=D._lastModified||0;
+    var remoteTime=remote&&remote.updatedAt?new Date(remote.updatedAt).getTime():0;
+    if(remoteTime>localTime+2000){
+      // Remote is newer: pull
+      D=remote.data;D._lastModified=remoteTime;
+      localStorage.setItem("mll_data",JSON.stringify(D));
+      render();
+      gdriveLog("⬇️ Datos descargados de Drive "+new Date().toLocaleTimeString("es-CL"));
+    }else if(localTime>remoteTime){
+      // Local is newer: push
+      return gdriveUpload();
+    }else{
+      gdriveLog("✅ Sincronizado "+new Date().toLocaleTimeString("es-CL"));
+    }
+    gdState.syncing=false;gdState.lastSync=Date.now();
+  }).catch(function(e){gdriveLog("❌ "+e.message);gdState.syncing=false});
+}
+
+function gdriveUpload(){
+  var payload={data:D,version:APP_VERSION,updatedAt:new Date().toISOString()};
+  return gapi.client.request({path:"/upload/drive/v3/files/"+gdState.fileId,method:"PATCH",params:{uploadType:"media"},body:JSON.stringify(payload)}).then(function(){
+    gdriveLog("⬆️ Subido "+new Date().toLocaleTimeString("es-CL"));
+    gdState.syncing=false;gdState.lastSync=Date.now();
+  });
+}
+
+// Patch save() to mark modification and trigger sync
+var _originalSave=save;
+save=function(){
+  try{D._lastModified=Date.now();localStorage.setItem("mll_data",JSON.stringify(D));localStorage.setItem("mll_version",APP_VERSION)}catch(e){}
+  // Debounced sync
+  if(gdState.authed&&!gdState.syncing){
+    clearTimeout(window._syncTimer);
+    window._syncTimer=setTimeout(function(){gdriveUpload()},3000);
+  }
+};
+
+// ══════ INIT ══════
+document.addEventListener("DOMContentLoaded",function(){
+  loadData();loadDarkPref();setTimeout(gdriveInit,1500);
+  document.getElementById("hDate").textContent=new Date().toLocaleDateString("es-CL",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  buildNav();render();
+});
+</script>
+</body>
+</html>
